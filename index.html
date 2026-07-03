@@ -12,12 +12,14 @@
     <header class="topbar">
       <div>
         <h1>Atlast</h1>
-        <p>Map-first travel planning with calendar coverage and an agent-ready route builder.</p>
+        <p>Map-first travel planning with calendar coverage, bookings, route versions, and an agent-ready builder.</p>
       </div>
       <nav class="tabs" aria-label="App sections">
         <button class="tab active" data-view="map">Map</button>
         <button class="tab" data-view="calendar">Calendar</button>
         <button class="tab" data-view="builder">Route Builder</button>
+        <button class="tab" data-view="bookings">Bookings</button>
+        <button class="tab" data-view="readiness">Readiness</button>
         <button class="tab" data-view="agent">AI Planner</button>
       </nav>
     </header>
@@ -27,8 +29,10 @@
         <aside class="panel rail">
           <div class="section-head">
             <h2>Current route</h2>
-            <p>Toggle stops in Route Builder. The map reacts instantly.</p>
+            <p>Switch versions or toggle stops. The map reacts instantly.</p>
           </div>
+          <label class="label">Route version</label>
+          <select id="versionSelect" class="field"></select>
           <div class="actions">
             <button id="fitRoute">Fit route</button>
             <button id="toggleHotels">Hotels only</button>
@@ -63,11 +67,24 @@
         <div class="page-head">
           <div>
             <h2>Route Builder</h2>
-            <p>Add, edit, disable, or delete stops and lodging blocks. Saved in this browser.</p>
+            <p>Create route versions, add stops, edit stops, and decide what belongs in each version.</p>
           </div>
           <div class="actions">
             <button id="exportJson">Export JSON</button>
             <button id="resetApp" class="danger">Reset</button>
+          </div>
+        </div>
+        <div class="version-card panel">
+          <div>
+            <h3>Route versions</h3>
+            <p class="small">Duplicate versions to compare Balanced, Ireland-heavy, Scotland-heavy, and Final routes without losing ideas.</p>
+          </div>
+          <div class="actions compact-actions">
+            <select id="builderVersionSelect" class="field compact-field"></select>
+            <input id="versionName" class="field compact-field" placeholder="Version name" />
+            <button id="renameVersion">Rename</button>
+            <button id="duplicateVersion">Duplicate</button>
+            <button id="deleteVersion" class="danger">Delete</button>
           </div>
         </div>
         <div class="builder-grid">
@@ -83,12 +100,12 @@
               <select class="field" name="type">
                 <option>sleep</option><option>sight</option><option>city</option><option>ferry</option><option>airport</option><option>book</option><option>food</option><option>optional</option>
               </select>
-              <select class="field" name="enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+              <select class="field" name="enabled"><option value="true">Enabled in current version</option><option value="false">Disabled in current version</option></select>
             </div>
             <textarea class="field" name="description" placeholder="Description"></textarea>
             <div class="actions"><button class="primary" type="submit">Save stop</button><button type="button" id="clearStopForm">Clear</button></div>
             <input type="hidden" name="id" />
-            <h3>Stops</h3>
+            <h3>Stops in selected version</h3>
             <div id="builderStops" class="stack scroll"></div>
           </form>
 
@@ -111,6 +128,61 @@
         </div>
       </section>
 
+      <section class="view" id="view-bookings">
+        <div class="page-head">
+          <div>
+            <h2>Bookings dashboard</h2>
+            <p>Track lodging, flights, ferry, rental car, attractions, costs, links, confirmations, and cancellation deadlines.</p>
+          </div>
+        </div>
+        <div class="builder-grid">
+          <form id="bookingForm" class="panel">
+            <h3>Add / edit booking</h3>
+            <div class="form-grid">
+              <input class="field" name="title" placeholder="Booking title" required />
+              <select class="field" name="category"><option>lodging</option><option>flight</option><option>ferry</option><option>rental car</option><option>attraction</option><option>restaurant</option><option>admin</option></select>
+              <select class="field" name="status"><option>not started</option><option>researching</option><option>booked</option><option>paid</option><option>cancelled</option></select>
+              <input class="field" name="date" type="date" />
+              <input class="field" name="cost" placeholder="Cost" />
+              <input class="field" name="confirmation" placeholder="Confirmation #" />
+              <input class="field" name="link" placeholder="Booking link" />
+              <input class="field" name="deadline" type="date" />
+            </div>
+            <textarea class="field" name="notes" placeholder="Notes, restrictions, parking, cancellation policy…"></textarea>
+            <div class="actions"><button class="primary" type="submit">Save booking</button><button type="button" id="clearBookingForm">Clear</button></div>
+            <input type="hidden" name="id" />
+          </form>
+          <div class="panel">
+            <h3>Bookings</h3>
+            <div id="bookingSummary" class="stats-grid"></div>
+            <div id="bookingList" class="stack scroll"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-readiness">
+        <div class="page-head">
+          <div>
+            <h2>Trip readiness</h2>
+            <p>A simple control panel for what is covered, what is risky, and what needs attention before the trip.</p>
+          </div>
+        </div>
+        <div class="readiness-grid">
+          <div class="panel score-panel">
+            <div id="readinessScore" class="score">0%</div>
+            <p class="small">Readiness score based on route coverage, lodging coverage, bookings, and unresolved critical items.</p>
+          </div>
+          <div class="panel">
+            <h3>Needs attention</h3>
+            <div id="readinessIssues" class="stack"></div>
+          </div>
+          <div class="panel">
+            <h3>What is working</h3>
+            <div id="readinessWins" class="stack"></div>
+          </div>
+        </div>
+      </section>
+
       <section class="view" id="view-agent">
         <div class="page-head">
           <div>
@@ -121,7 +193,7 @@
         <div class="chat-shell">
           <div id="messages" class="messages"></div>
           <div class="chat-input">
-            <input id="agentInput" class="field" placeholder="Ask about gaps, bookings, Dublin nights, ferry logistics, Skye pacing…" />
+            <input id="agentInput" class="field" placeholder="Ask about gaps, bookings, readiness, Dublin nights, ferry logistics, Skye pacing…" />
             <button id="sendAgent" class="primary">Send</button>
           </div>
         </div>
