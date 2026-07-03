@@ -49,7 +49,10 @@ main { min-height: 0; }
 .rail.panel { border-radius: 0; box-shadow: none; }
 .section-head h2, .page-head h2, .panel h3 { margin: 0 0 6px; letter-spacing: -.03em; }
 .section-head p, .page-head p, .muted-card, .small { color: var(--muted); font-size: 12px; line-height: 1.38; }
+.label { display:block; color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; margin-top: 10px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.compact-actions { align-items: center; margin: 0; }
+.compact-field { width: min(240px, 100%); margin: 0; }
 .field { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 14px; padding: 11px; margin: 6px 0; }
 textarea.field { min-height: 72px; resize: vertical; }
 .stack { display: grid; gap: 8px; }
@@ -62,7 +65,7 @@ textarea.field { min-height: 72px; resize: vertical; }
 .marker { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); border: 2px solid var(--green); color: var(--green); font-weight: 900; font-size: 11px; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
 .marker.selected { background: var(--gold); color: #111; border-color: #111; }
 
-#view-calendar.active, #view-builder.active, #view-agent.active { display: flex; flex-direction: column; overflow: auto; padding: 18px; }
+#view-calendar.active, #view-builder.active, #view-bookings.active, #view-readiness.active, #view-agent.active { display: flex; flex-direction: column; overflow: auto; padding: 18px; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; margin-bottom: 14px; }
 .calendar-shell { flex: 1; min-height: 0; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
 .calendar-grid { min-width: 100%; width: 100%; }
@@ -83,20 +86,39 @@ textarea.field { min-height: 72px; resize: vertical; }
 .coverage-item.warn { border-color: var(--gold); }
 .coverage-item.bad { border-color: var(--red); }
 .builder-grid { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr); gap: 14px; }
+.version-card { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 14px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 10px 0; }
+.stat-card { border: 1px solid var(--line); background: var(--bg); border-radius: 16px; padding: 12px; }
+.stat-card b { display: block; font-size: 20px; letter-spacing: -.04em; }
+.booking-card { display: grid; grid-template-columns: 1fr auto; gap: 10px; border: 1px solid var(--line); background: var(--bg); border-radius: 16px; padding: 12px; }
+.status-pill { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px 7px; font-size: 11px; font-weight: 900; color: var(--muted); margin: 2px 4px 2px 0; }
+.status-pill.good { color: #3f7d52; border-color: #3f7d52; }
+.status-pill.warn { color: var(--gold); border-color: var(--gold); }
+.status-pill.bad { color: var(--red); border-color: var(--red); }
+.readiness-grid { display: grid; grid-template-columns: minmax(240px, 320px) 1fr 1fr; gap: 14px; }
+.score-panel { display: grid; align-content: center; min-height: 220px; }
+.score { font-size: 62px; font-weight: 900; letter-spacing: -.08em; color: var(--green); line-height: .9; }
+.issue-card { border: 1px solid var(--line); background: var(--bg); border-radius: 16px; padding: 12px; }
+.issue-card.bad { border-color: var(--red); }
+.issue-card.good { border-color: #4e8b5d; }
 .chat-shell { flex: 1; min-height: 500px; display: grid; grid-template-rows: 1fr auto; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; }
 .messages { padding: 14px; overflow: auto; }
 .msg { max-width: 780px; border: 1px solid var(--line); border-radius: 18px; padding: 12px; margin: 8px 0; background: var(--bg); }
 .msg.user { margin-left: auto; background: var(--green); color: var(--bg); }
 .chat-input { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
 
+@media (max-width: 980px) {
+  .readiness-grid, .builder-grid { grid-template-columns: 1fr; }
+  .version-card { display: block; }
+}
 @media (max-width: 860px) {
   #app { height: auto; min-height: 100dvh; }
   .topbar { position: sticky; top: 0; align-items: flex-start; }
   #view-map.active { display: flex; flex-direction: column-reverse; }
   #map { height: 58dvh; min-height: 420px; }
   .rail.panel { height: auto; border-right: 0; border-top: 1px solid var(--line); }
-  .builder-grid, .form-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
   .page-head { display: block; }
   .calendar-grid { min-width: 1050px; }
   .cal-head, .cal-row { grid-template-columns: 150px repeat(16, 56px); }
