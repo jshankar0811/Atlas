@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atlast · AI Travel Planner</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <h1>Atlast</h1>
+        <p>Map-first travel planning with calendar coverage and an agent-ready route builder.</p>
+      </div>
+      <nav class="tabs" aria-label="App sections">
+        <button class="tab active" data-view="map">Map</button>
+        <button class="tab" data-view="calendar">Calendar</button>
+        <button class="tab" data-view="builder">Route Builder</button>
+        <button class="tab" data-view="agent">AI Planner</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="view active" id="view-map">
+        <aside class="panel rail">
+          <div class="section-head">
+            <h2>Current route</h2>
+            <p>Toggle stops in Route Builder. The map reacts instantly.</p>
+          </div>
+          <div class="actions">
+            <button id="fitRoute">Fit route</button>
+            <button id="toggleHotels">Hotels only</button>
+            <button id="toggleTheme">Dark</button>
+          </div>
+          <div id="selectedStop" class="selected-card muted-card">Select a stop on the map.</div>
+          <input id="stopSearch" class="field" placeholder="Search Doolin, Skye, ferry…" />
+          <div id="stopList" class="stack"></div>
+        </aside>
+        <div id="map"></div>
+      </section>
+
+      <section class="view" id="view-calendar">
+        <div class="page-head">
+          <div>
+            <h2>Lodging overlap calendar</h2>
+            <p>Full-page coverage view. Bars run from check-in date to check-out date.</p>
+          </div>
+          <div class="actions">
+            <button id="showAllBlocks" class="primary">All blocks</button>
+            <button id="showHotelBlocks">Hotels only</button>
+            <button id="jumpAddStay">Add stay</button>
+          </div>
+        </div>
+        <div class="calendar-shell">
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+        <div id="coverageGrid" class="coverage-grid"></div>
+      </section>
+
+      <section class="view" id="view-builder">
+        <div class="page-head">
+          <div>
+            <h2>Route Builder</h2>
+            <p>Add, edit, disable, or delete stops and lodging blocks. Saved in this browser.</p>
+          </div>
+          <div class="actions">
+            <button id="exportJson">Export JSON</button>
+            <button id="resetApp" class="danger">Reset</button>
+          </div>
+        </div>
+        <div class="builder-grid">
+          <form id="stopForm" class="panel">
+            <h3>Add / edit route stop</h3>
+            <div class="form-grid">
+              <input class="field" name="name" placeholder="Stop name" required />
+              <input class="field" name="day" type="number" min="1" max="60" placeholder="Day" required />
+              <input class="field" name="lat" type="number" step="any" placeholder="Latitude" required />
+              <input class="field" name="lng" type="number" step="any" placeholder="Longitude" required />
+              <input class="field" name="country" placeholder="Country" />
+              <input class="field" name="region" placeholder="Region" />
+              <select class="field" name="type">
+                <option>sleep</option><option>sight</option><option>city</option><option>ferry</option><option>airport</option><option>book</option><option>food</option><option>optional</option>
+              </select>
+              <select class="field" name="enabled"><option value="true">Enabled</option><option value="false">Disabled</option></select>
+            </div>
+            <textarea class="field" name="description" placeholder="Description"></textarea>
+            <div class="actions"><button class="primary" type="submit">Save stop</button><button type="button" id="clearStopForm">Clear</button></div>
+            <input type="hidden" name="id" />
+            <h3>Stops</h3>
+            <div id="builderStops" class="stack scroll"></div>
+          </form>
+
+          <form id="blockForm" class="panel">
+            <h3>Add lodging / travel block</h3>
+            <div class="form-grid">
+              <input class="field" name="label" placeholder="Label" required />
+              <select class="field" name="type"><option>hotel</option><option>flight</option><option>ferry</option><option>drive</option></select>
+              <input class="field" name="start" type="date" required />
+              <input class="field" name="end" type="date" required />
+              <select class="field" name="color"><option>orange</option><option>purple</option><option>green</option><option>red</option><option>teal</option><option>slate</option><option>brown</option><option>indigo</option><option>olive</option><option>pink</option><option>blue</option></select>
+              <input class="field" name="cost" placeholder="Cost, optional" />
+            </div>
+            <textarea class="field" name="note" placeholder="Notes, booking link, confirmation #"></textarea>
+            <div class="actions"><button class="primary" type="submit">Save block</button><button type="button" id="clearBlockForm">Clear</button></div>
+            <input type="hidden" name="id" />
+            <h3>Calendar blocks</h3>
+            <div id="builderBlocks" class="stack scroll"></div>
+          </form>
+        </div>
+      </section>
+
+      <section class="view" id="view-agent">
+        <div class="page-head">
+          <div>
+            <h2>AI Planner</h2>
+            <p>Local planning helper for now. Future version will connect to a backend and apply approved edits to the map/calendar.</p>
+          </div>
+        </div>
+        <div class="chat-shell">
+          <div id="messages" class="messages"></div>
+          <div class="chat-input">
+            <input id="agentInput" class="field" placeholder="Ask about gaps, bookings, Dublin nights, ferry logistics, Skye pacing…" />
+            <button id="sendAgent" class="primary">Send</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
