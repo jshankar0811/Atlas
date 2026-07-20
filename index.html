@@ -3,200 +3,78 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Atlast · AI Travel Planner</title>
+  <meta name="theme-color" content="#173f2b" />
+  <title>Atlas · Ireland & Scotland 2026</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
   <div id="app">
     <header class="topbar">
-      <div>
-        <h1>Atlast</h1>
-        <p>Map-first travel planning with calendar coverage, bookings, route versions, and an agent-ready builder.</p>
+      <div class="brand">
+        <span class="brand-mark">A</span>
+        <div><h1>Atlas</h1><p>Ireland & Scotland · Jul 23–Aug 7, 2026</p></div>
       </div>
-      <nav class="tabs" aria-label="App sections">
-        <button class="tab active" data-view="map">Map</button>
-        <button class="tab" data-view="calendar">Calendar</button>
-        <button class="tab" data-view="builder">Route Builder</button>
+      <nav class="tabs" aria-label="Atlas sections">
+        <button class="tab active" data-view="today">Today</button>
+        <button class="tab" data-view="trip">Trip</button>
+        <button class="tab" data-view="map">Map</button>
         <button class="tab" data-view="bookings">Bookings</button>
-        <button class="tab" data-view="readiness">Readiness</button>
-        <button class="tab" data-view="agent">AI Planner</button>
+        <button class="tab" data-view="readiness">Mission Control</button>
       </nav>
     </header>
 
     <main>
-      <section class="view active" id="view-map">
-        <aside class="panel rail">
-          <div class="section-head">
-            <h2>Current route</h2>
-            <p>Switch versions or toggle stops. The map reacts instantly.</p>
+      <section class="view active page" id="view-today">
+        <div class="hero">
+          <div>
+            <span class="eyebrow">Your travel command center</span>
+            <h2 id="heroTitle">Ireland & Scotland 2026</h2>
+            <p id="heroSubtitle">Everything important, without digging through email.</p>
           </div>
-          <label class="label">Route version</label>
-          <select id="versionSelect" class="field"></select>
-          <div class="actions">
-            <button id="fitRoute">Fit route</button>
-            <button id="toggleHotels">Hotels only</button>
-            <button id="toggleTheme">Dark</button>
-          </div>
-          <div id="selectedStop" class="selected-card muted-card">Select a stop on the map.</div>
-          <input id="stopSearch" class="field" placeholder="Search Doolin, Skye, ferry…" />
-          <div id="stopList" class="stack"></div>
+          <div class="hero-score"><span id="heroScore">0%</span><small>ready</small></div>
+        </div>
+        <div class="metric-grid" id="todayMetrics"></div>
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="section-head"><div><span class="eyebrow">Next up</span><h3 id="nextTitle">Departure prep</h3></div><span class="status-pill warn" id="nextBadge">Before Jul 23</span></div>
+            <div id="nextCard"></div>
+          </section>
+          <section class="panel">
+            <div class="section-head"><div><span class="eyebrow">Priority</span><h3>Needs attention</h3></div></div>
+            <div class="stack" id="todayIssues"></div>
+          </section>
+        </div>
+        <section class="panel">
+          <div class="section-head"><div><span class="eyebrow">Travel day view</span><h3>Upcoming itinerary</h3></div><button class="ghost" data-go="trip">Open full trip</button></div>
+          <div class="timeline compact" id="todayTimeline"></div>
+        </section>
+      </section>
+
+      <section class="view page" id="view-trip">
+        <div class="page-head"><div><span class="eyebrow">Day by day</span><h2>Full itinerary</h2><p>Tap any day for booking details, notes, and navigation.</p></div><button id="printTrip">Print / save PDF</button></div>
+        <div class="trip-layout"><div class="timeline" id="tripTimeline"></div><aside class="panel sticky" id="dayDetail"><p class="muted">Choose a day to see its details.</p></aside></div>
+      </section>
+
+      <section class="view" id="view-map">
+        <aside class="map-rail panel">
+          <div class="section-head"><div><span class="eyebrow">Route</span><h2>15-day journey</h2></div><button id="fitRoute">Fit</button></div>
+          <input id="stopSearch" class="field" placeholder="Search cities, hotels, ferry…" />
+          <div class="stack" id="stopList"></div>
         </aside>
         <div id="map"></div>
       </section>
 
-      <section class="view" id="view-calendar">
-        <div class="page-head">
-          <div>
-            <h2>Lodging overlap calendar</h2>
-            <p>Full-page coverage view. Bars run from check-in date to check-out date.</p>
-          </div>
-          <div class="actions">
-            <button id="showAllBlocks" class="primary">All blocks</button>
-            <button id="showHotelBlocks">Hotels only</button>
-            <button id="jumpAddStay">Add stay</button>
-          </div>
-        </div>
-        <div class="calendar-shell">
-          <div id="calendarGrid" class="calendar-grid"></div>
-        </div>
-        <div id="coverageGrid" class="coverage-grid"></div>
+      <section class="view page" id="view-bookings">
+        <div class="page-head"><div><span class="eyebrow">Vault</span><h2>Bookings & documents</h2><p>Confirmation numbers and travel logistics in one place.</p></div></div>
+        <div class="metric-grid" id="bookingMetrics"></div>
+        <div class="booking-grid" id="bookingList"></div>
       </section>
 
-      <section class="view" id="view-builder">
-        <div class="page-head">
-          <div>
-            <h2>Route Builder</h2>
-            <p>Create route versions, add stops, edit stops, and decide what belongs in each version.</p>
-          </div>
-          <div class="actions">
-            <button id="exportJson">Export JSON</button>
-            <button id="resetApp" class="danger">Reset</button>
-          </div>
-        </div>
-        <div class="version-card panel">
-          <div>
-            <h3>Route versions</h3>
-            <p class="small">Duplicate versions to compare Balanced, Ireland-heavy, Scotland-heavy, and Final routes without losing ideas.</p>
-          </div>
-          <div class="actions compact-actions">
-            <select id="builderVersionSelect" class="field compact-field"></select>
-            <input id="versionName" class="field compact-field" placeholder="Version name" />
-            <button id="renameVersion">Rename</button>
-            <button id="duplicateVersion">Duplicate</button>
-            <button id="deleteVersion" class="danger">Delete</button>
-          </div>
-        </div>
-        <div class="builder-grid">
-          <form id="stopForm" class="panel">
-            <h3>Add / edit route stop</h3>
-            <div class="form-grid">
-              <input class="field" name="name" placeholder="Stop name" required />
-              <input class="field" name="day" type="number" min="1" max="60" placeholder="Day" required />
-              <input class="field" name="lat" type="number" step="any" placeholder="Latitude" required />
-              <input class="field" name="lng" type="number" step="any" placeholder="Longitude" required />
-              <input class="field" name="country" placeholder="Country" />
-              <input class="field" name="region" placeholder="Region" />
-              <select class="field" name="type">
-                <option>sleep</option><option>sight</option><option>city</option><option>ferry</option><option>airport</option><option>book</option><option>food</option><option>optional</option>
-              </select>
-              <select class="field" name="enabled"><option value="true">Enabled in current version</option><option value="false">Disabled in current version</option></select>
-            </div>
-            <textarea class="field" name="description" placeholder="Description"></textarea>
-            <div class="actions"><button class="primary" type="submit">Save stop</button><button type="button" id="clearStopForm">Clear</button></div>
-            <input type="hidden" name="id" />
-            <h3>Stops in selected version</h3>
-            <div id="builderStops" class="stack scroll"></div>
-          </form>
-
-          <form id="blockForm" class="panel">
-            <h3>Add lodging / travel block</h3>
-            <div class="form-grid">
-              <input class="field" name="label" placeholder="Label" required />
-              <select class="field" name="type"><option>hotel</option><option>flight</option><option>ferry</option><option>drive</option></select>
-              <input class="field" name="start" type="date" required />
-              <input class="field" name="end" type="date" required />
-              <select class="field" name="color"><option>orange</option><option>purple</option><option>green</option><option>red</option><option>teal</option><option>slate</option><option>brown</option><option>indigo</option><option>olive</option><option>pink</option><option>blue</option></select>
-              <input class="field" name="cost" placeholder="Cost, optional" />
-            </div>
-            <textarea class="field" name="note" placeholder="Notes, booking link, confirmation #"></textarea>
-            <div class="actions"><button class="primary" type="submit">Save block</button><button type="button" id="clearBlockForm">Clear</button></div>
-            <input type="hidden" name="id" />
-            <h3>Calendar blocks</h3>
-            <div id="builderBlocks" class="stack scroll"></div>
-          </form>
-        </div>
-      </section>
-
-      <section class="view" id="view-bookings">
-        <div class="page-head">
-          <div>
-            <h2>Bookings dashboard</h2>
-            <p>Track lodging, flights, ferry, rental car, attractions, costs, links, confirmations, and cancellation deadlines.</p>
-          </div>
-        </div>
-        <div class="builder-grid">
-          <form id="bookingForm" class="panel">
-            <h3>Add / edit booking</h3>
-            <div class="form-grid">
-              <input class="field" name="title" placeholder="Booking title" required />
-              <select class="field" name="category"><option>lodging</option><option>flight</option><option>ferry</option><option>rental car</option><option>attraction</option><option>restaurant</option><option>admin</option></select>
-              <select class="field" name="status"><option>not started</option><option>researching</option><option>booked</option><option>paid</option><option>cancelled</option></select>
-              <input class="field" name="date" type="date" />
-              <input class="field" name="cost" placeholder="Cost" />
-              <input class="field" name="confirmation" placeholder="Confirmation #" />
-              <input class="field" name="link" placeholder="Booking link" />
-              <input class="field" name="deadline" type="date" />
-            </div>
-            <textarea class="field" name="notes" placeholder="Notes, restrictions, parking, cancellation policy…"></textarea>
-            <div class="actions"><button class="primary" type="submit">Save booking</button><button type="button" id="clearBookingForm">Clear</button></div>
-            <input type="hidden" name="id" />
-          </form>
-          <div class="panel">
-            <h3>Bookings</h3>
-            <div id="bookingSummary" class="stats-grid"></div>
-            <div id="bookingList" class="stack scroll"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" id="view-readiness">
-        <div class="page-head">
-          <div>
-            <h2>Trip readiness</h2>
-            <p>A simple control panel for what is covered, what is risky, and what needs attention before the trip.</p>
-          </div>
-        </div>
-        <div class="readiness-grid">
-          <div class="panel score-panel">
-            <div id="readinessScore" class="score">0%</div>
-            <p class="small">Readiness score based on route coverage, lodging coverage, bookings, and unresolved critical items.</p>
-          </div>
-          <div class="panel">
-            <h3>Needs attention</h3>
-            <div id="readinessIssues" class="stack"></div>
-          </div>
-          <div class="panel">
-            <h3>What is working</h3>
-            <div id="readinessWins" class="stack"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" id="view-agent">
-        <div class="page-head">
-          <div>
-            <h2>AI Planner</h2>
-            <p>Local planning helper for now. Future version will connect to a backend and apply approved edits to the map/calendar.</p>
-          </div>
-        </div>
-        <div class="chat-shell">
-          <div id="messages" class="messages"></div>
-          <div class="chat-input">
-            <input id="agentInput" class="field" placeholder="Ask about gaps, bookings, readiness, Dublin nights, ferry logistics, Skye pacing…" />
-            <button id="sendAgent" class="primary">Send</button>
-          </div>
-        </div>
+      <section class="view page" id="view-readiness">
+        <div class="page-head"><div><span class="eyebrow">Mission Control</span><h2>Trip readiness</h2><p>Documents, packing, purchases, and the final loose ends.</p></div><button id="resetChecks" class="ghost">Reset checks</button></div>
+        <div class="readiness-hero panel"><div><span class="eyebrow">Readiness score</span><div class="score" id="readinessScore">0%</div><p id="scoreCopy" class="muted"></p></div><div class="progress-wrap"><div class="progress"><span id="progressBar"></span></div><small id="progressLabel"></small></div></div>
+        <div class="check-grid" id="checkGroups"></div>
       </section>
     </main>
   </div>
