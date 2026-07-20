@@ -1,0 +1,13 @@
+@import '../src/styles.css';
+@import '../src/intelligence.css';
+@import '../src/journal.css';
+
+textarea, select { font: inherit; }
+textarea { width:100%; min-height:120px; resize:vertical; }
+.atlas-shell { min-height:100dvh; }
+.route-grid { display:grid; grid-template-columns:360px 1fr; min-height:calc(100dvh - 66px); }
+.map-canvas { min-height:620px; }
+.journal-form { display:grid; gap:12px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.empty-state { padding:28px; text-align:center; color:var(--muted); }
+@media(max-width:800px){.route-grid,.form-grid{grid-template-columns:1fr}.map-canvas{min-height:55dvh}}
