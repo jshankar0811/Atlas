@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="src/styles.css" />
   <link rel="stylesheet" href="src/intelligence.css" />
+  <link rel="stylesheet" href="src/journal.css" />
 </head>
 <body>
   <div id="app">
@@ -25,6 +26,7 @@
         <button class="tab" data-view="trip">Trip</button>
         <button class="tab" data-view="map">Map</button>
         <button class="tab" data-view="bookings">Bookings</button>
+        <button class="tab" data-view="journal">Journal</button>
         <button class="tab" data-view="readiness">Mission Control</button>
       </nav>
     </header>
@@ -74,6 +76,15 @@
         <div class="page-head"><div><span class="eyebrow">Vault</span><h2>Bookings & documents</h2><p>Confirmation numbers and travel logistics in one place.</p></div></div>
         <div class="metric-grid" id="bookingMetrics"></div>
         <div class="booking-grid" id="bookingList"></div>
+      </section>
+
+      <section class="view page" id="view-journal">
+        <div class="page-head"><div><span class="eyebrow">Keep the story</span><h2>Trip journal</h2><p>Capture the moments, meals, costs, and tiny details that disappear first.</p></div></div>
+        <div class="metric-grid" id="journalMetrics"></div>
+        <div class="journal-layout">
+          <div class="journal-days" id="journalDays"></div>
+          <aside class="panel journal-editor" id="journalEditor"><p class="muted">Choose a travel day to start writing.</p></aside>
+        </div>
       </section>
 
       <section class="view page" id="view-readiness">
