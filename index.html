@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="src/styles.css" />
+  <link rel="stylesheet" href="src/intelligence.css" />
 </head>
 <body>
   <div id="app">
@@ -41,11 +42,11 @@
         <div class="metric-grid" id="todayMetrics"></div>
         <div class="dashboard-grid">
           <section class="panel">
-            <div class="section-head"><div><span class="eyebrow">Next up</span><h3 id="nextTitle">Departure prep</h3></div><span class="status-pill warn" id="nextBadge">Before Jul 23</span></div>
+            <div class="section-head"><div><span class="eyebrow">Intelligence</span><h3 id="nextTitle">Departure briefing</h3></div><span class="status-pill warn" id="nextBadge">Before Jul 23</span></div>
             <div id="nextCard"></div>
           </section>
           <section class="panel">
-            <div class="section-head"><div><span class="eyebrow">Priority</span><h3>Needs attention</h3></div></div>
+            <div class="section-head"><div><span class="eyebrow">Ranked priority</span><h3>What matters next</h3></div></div>
             <div class="stack" id="todayIssues"></div>
           </section>
         </div>
@@ -56,7 +57,7 @@
       </section>
 
       <section class="view page" id="view-trip">
-        <div class="page-head"><div><span class="eyebrow">Day by day</span><h2>Full itinerary</h2><p>Tap any day for booking details, notes, and navigation.</p></div><button id="printTrip">Print / save PDF</button></div>
+        <div class="page-head"><div><span class="eyebrow">Day by day</span><h2>Full itinerary</h2><p>Tap any day for its plan, Atlas briefing, booking details, and navigation.</p></div><button id="printTrip">Print / save PDF</button></div>
         <div class="trip-layout"><div class="timeline" id="tripTimeline"></div><aside class="panel sticky" id="dayDetail"><p class="muted">Choose a day to see its details.</p></aside></div>
       </section>
 
