@@ -3,15 +3,26 @@ const STORAGE_VERSION = 2;
 export function createTripStore(trip) {
   const key = `atlas:${trip.id}:v${STORAGE_VERSION}`;
 
+  function defaults() {
+    return {
+      checks: {},
+      journals: {},
+      selectedDayId: trip.days[0]?.id || null,
+      selectedJournalDayId: trip.days[0]?.id || null
+    };
+  }
+
   function read() {
     try {
       const value = JSON.parse(localStorage.getItem(key) || '{}');
       return {
+        ...defaults(),
+        ...value,
         checks: value.checks || {},
-        selectedDayId: value.selectedDayId || trip.days[0]?.id || null
+        journals: value.journals || {}
       };
     } catch {
-      return { checks: {}, selectedDayId: trip.days[0]?.id || null };
+      return defaults();
     }
   }
 
