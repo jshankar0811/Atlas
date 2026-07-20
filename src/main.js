@@ -25,11 +25,13 @@ function checklistStatus() {
 function localDate(value) { return new Date(`${value}T12:00:00`); }
 function startOfToday() { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12); }
 function intelligence() { return buildTripIntelligence(trip, state); }
+function escapeHtml(value = '') { return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]); }
 
 function showView(view) {
   document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.view === view));
   document.querySelectorAll('.view').forEach(section => section.classList.toggle('active', section.id === `view-${view}`));
   if (view === 'map' && map) setTimeout(() => { map.invalidateSize(); fitRoute(); }, 100);
+  if (view === 'journal') renderJournal();
 }
 
 function initTabs() {
@@ -52,8 +54,8 @@ function renderNextCard(insight) {
   const actions = insight.phase === 'before'
     ? '<button class="primary" data-go="readiness">Open Mission Control</button>'
     : insight.phase === 'during'
-      ? `<button class="primary" data-open-day="${insight.current.id}">Open today’s plan</button>${insight.next ? ` <button class="ghost" data-open-day="${insight.next.id}">Next: ${insight.next.title}</button>` : ''}`
-      : '<button class="primary" data-go="trip">Replay the journey</button>';
+      ? `<button class="primary" data-open-day="${insight.current.id}">Open today’s plan</button> <button class="ghost" data-journal-day="${insight.current.id}">Write today’s journal</button>${insight.next ? ` <button class="ghost" data-open-day="${insight.next.id}">Next: ${insight.next.title}</button>` : ''}`
+      : '<button class="primary" data-go="journal">Open trip journal</button> <button class="ghost" data-go="trip">Replay the journey</button>';
   return `<div class="smart-briefing">${briefingMarkup(insight.briefing)}</div><div class="briefing-actions">${actions}</div>`;
 }
 
@@ -85,6 +87,7 @@ function renderToday() {
 
   document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.go)));
   document.querySelectorAll('[data-open-day]').forEach(button => button.addEventListener('click', () => { showView('trip'); selectDay(button.dataset.openDay); }));
+  document.querySelectorAll('[data-journal-day]').forEach(button => button.addEventListener('click', () => openJournalDay(button.dataset.journalDay)));
 }
 
 function selectDay(id) {
@@ -93,9 +96,11 @@ function selectDay(id) {
   const dayIndex = trip.days.findIndex(item => item.id === id);
   const next = trip.days[dayIndex + 1] || null;
   const dayBriefing = buildTripIntelligence({ ...trip, startDate: day.date, endDate: day.end || day.date, days: trip.days.slice(dayIndex) }, state, localDate(day.date)).briefing;
+  const journal = state.journals?.[id];
   persist({ selectedDayId: id });
   document.querySelectorAll('[data-day]').forEach(item => item.classList.toggle('active', item.dataset.day === id));
-  $('dayDetail').innerHTML = `<span class="eyebrow">${day.label}</span><h2>${day.title}</h2><p class="muted">${day.place}</p><span class="status-pill ${day.status === 'booked' ? 'good' : 'warn'}">${day.status}</span><div class="day-briefing"><small>Atlas briefing</small><p>${dayBriefing.focus}</p><span>Next: ${next ? `${next.title} · ${next.place}` : 'Journey complete'}</span></div><div class="detail-list"><div class="detail-row"><small>Plan</small>${day.detail}</div>${day.confirmation ? `<div class="detail-row"><small>Confirmation</small><b>${day.confirmation}</b></div>` : ''}<div class="detail-row"><small>Atlas note</small>${day.status === 'open' ? 'This still needs a final decision or verified booking.' : 'This item is currently marked confirmed.'}</div></div>`;
+  $('dayDetail').innerHTML = `<span class="eyebrow">${day.label}</span><h2>${day.title}</h2><p class="muted">${day.place}</p><span class="status-pill ${day.status === 'booked' ? 'good' : 'warn'}">${day.status}</span><div class="day-briefing"><small>Atlas briefing</small><p>${dayBriefing.focus}</p><span>Next: ${next ? `${next.title} · ${next.place}` : 'Journey complete'}</span></div><div class="detail-list"><div class="detail-row"><small>Plan</small>${day.detail}</div>${day.confirmation ? `<div class="detail-row"><small>Confirmation</small><b>${day.confirmation}</b></div>` : ''}<div class="detail-row"><small>Journal</small>${journal?.notes ? escapeHtml(journal.notes).slice(0, 140) : 'No memory captured yet.'}</div><div class="detail-row"><small>Atlas note</small>${day.status === 'open' ? 'This still needs a final decision or verified booking.' : 'This item is currently marked confirmed.'}</div></div><button class="primary journal-from-day" data-journal-day="${day.id}">${journal ? 'Edit journal entry' : 'Write journal entry'}</button>`;
+  document.querySelector('[data-journal-day]')?.addEventListener('click', event => openJournalDay(event.currentTarget.dataset.journalDay));
 }
 
 function renderTrip() {
@@ -103,6 +108,54 @@ function renderTrip() {
   document.querySelectorAll('[data-day]').forEach(button => button.addEventListener('click', () => selectDay(button.dataset.day)));
   const insight = intelligence();
   selectDay(state.selectedDayId || insight.current?.id || trip.days[0].id);
+}
+
+function journalEntries() { return Object.values(state.journals || {}).filter(entry => entry && Object.values(entry).some(Boolean)); }
+function journalExpenseTotal() { return journalEntries().reduce((sum, entry) => sum + (Number(entry.expense) || 0), 0); }
+
+function journalDayCard(day) {
+  const entry = state.journals?.[day.id];
+  const hasEntry = Boolean(entry && (entry.notes || entry.favorite || entry.meal || entry.expense || entry.rating));
+  return `<button class="journal-day-card ${state.selectedJournalDayId === day.id ? 'active' : ''}" data-edit-journal="${day.id}"><span class="journal-date">${day.label}</span><div><b>${day.title}</b><span>${day.place}</span>${hasEntry ? `<small>${entry.rating ? `${'★'.repeat(Number(entry.rating))} ` : ''}${escapeHtml(entry.favorite || entry.notes || 'Memory saved').slice(0, 78)}</small>` : '<small>Tap to capture this day</small>'}</div><span class="journal-state ${hasEntry ? 'saved' : ''}">${hasEntry ? 'Saved' : 'Empty'}</span></button>`;
+}
+
+function renderJournalEditor(dayId) {
+  const day = trip.days.find(item => item.id === dayId) || trip.days[0];
+  const entry = state.journals?.[day.id] || {};
+  $('journalEditor').innerHTML = `<span class="eyebrow">${day.label} · ${day.place}</span><h2>${day.title}</h2><p class="muted">Write the version you will actually want to remember—not a perfect travel log.</p><form id="journalForm" class="journal-form"><label>What happened<textarea name="notes" rows="6" placeholder="The walk, the weather, the weird little moment…">${escapeHtml(entry.notes || '')}</textarea></label><div class="journal-form-grid"><label>Favorite moment<input name="favorite" value="${escapeHtml(entry.favorite || '')}" placeholder="Best part of the day" /></label><label>Favorite food or drink<input name="meal" value="${escapeHtml(entry.meal || '')}" placeholder="What was worth remembering?" /></label><label>Spend that day<input name="expense" type="number" min="0" step="0.01" value="${entry.expense || ''}" placeholder="0.00" /></label><label>Day rating<select name="rating"><option value="">Not rated</option>${[1,2,3,4,5].map(value => `<option value="${value}" ${Number(entry.rating) === value ? 'selected' : ''}>${value} / 5</option>`).join('')}</select></label></div><div class="journal-actions"><button class="primary" type="submit">Save memory</button>${entry.updatedAt ? `<small>Last saved ${new Date(entry.updatedAt).toLocaleString()}</small>` : '<small>Saved privately in this browser.</small>'}</div></form>`;
+  $('journalForm').addEventListener('submit', event => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const nextEntry = {
+      notes: data.get('notes').trim(),
+      favorite: data.get('favorite').trim(),
+      meal: data.get('meal').trim(),
+      expense: data.get('expense'),
+      rating: data.get('rating'),
+      updatedAt: new Date().toISOString()
+    };
+    persist({ journals: { ...(state.journals || {}), [day.id]: nextEntry }, selectedJournalDayId: day.id });
+    renderJournal();
+    renderTrip();
+  });
+}
+
+function renderJournal() {
+  if (!$('journalDays')) return;
+  const entries = journalEntries();
+  const favorites = entries.filter(entry => entry.favorite).length;
+  $('journalMetrics').innerHTML = `<div class="metric"><b>${entries.length}</b><span>days captured</span></div><div class="metric"><b>${favorites}</b><span>favorite moments</span></div><div class="metric"><b>$${journalExpenseTotal().toFixed(0)}</b><span>spend recorded</span></div><div class="metric"><b>${trip.days.length - entries.length}</b><span>days left to write</span></div>`;
+  $('journalDays').innerHTML = trip.days.map(journalDayCard).join('');
+  document.querySelectorAll('[data-edit-journal]').forEach(button => button.addEventListener('click', () => {
+    persist({ selectedJournalDayId: button.dataset.editJournal });
+    renderJournal();
+  }));
+  renderJournalEditor(state.selectedJournalDayId || intelligence().current?.id || trip.days[0].id);
+}
+
+function openJournalDay(dayId) {
+  persist({ selectedJournalDayId: dayId });
+  showView('journal');
 }
 
 function mapStops() { return getMapStops(trip); }
@@ -178,6 +231,7 @@ function init() {
   renderTrip();
   renderStopList();
   renderBookings();
+  renderJournal();
   renderReadiness();
   initMap();
   $('fitRoute').addEventListener('click', fitRoute);
