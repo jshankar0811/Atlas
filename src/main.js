@@ -1,6 +1,7 @@
 import { irelandScotland2026 } from './data/ireland-scotland-2026.js';
 import { createTripStore } from './core/store.js';
 import { getMapStops, getTripSummary } from './core/trip.js';
+import { buildTripIntelligence } from './core/intelligence.js';
 
 const trip = irelandScotland2026;
 const store = createTripStore(trip);
@@ -21,45 +22,9 @@ function checklistStatus() {
   return { total, done, score: total ? Math.round((done / total) * 100) : 0 };
 }
 
-function openBookings() {
-  return trip.bookings.filter(item => item.status !== 'booked');
-}
-
-function localDate(value) {
-  return new Date(`${value}T12:00:00`);
-}
-
-function startOfToday() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
-}
-
-function dayDiff(from, to) {
-  return Math.round((to - from) / 86400000);
-}
-
-function getTripMoment() {
-  const today = startOfToday();
-  const start = localDate(trip.startDate);
-  const end = localDate(trip.endDate);
-  const current = trip.days.find(day => {
-    const dayStart = localDate(day.date);
-    const dayEnd = localDate(day.end || day.date);
-    return today >= dayStart && today <= dayEnd;
-  });
-  const next = trip.days.find(day => localDate(day.date) > today);
-
-  if (today < start) return { phase: 'before', daysUntil: dayDiff(today, start), current: null, next: trip.days[0] };
-  if (today > end) return { phase: 'after', daysSince: dayDiff(end, today), current: null, next: null };
-  return { phase: 'during', tripDay: dayDiff(start, today) + 1, current: current || next || trip.days.at(-1), next };
-}
-
-function incompleteChecks(limit = 3) {
-  return trip.checklists
-    .flatMap(group => group.items.map(item => ({ ...item, group: group.group })))
-    .filter(item => !state.checks[item.id])
-    .slice(0, limit);
-}
+function localDate(value) { return new Date(`${value}T12:00:00`); }
+function startOfToday() { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12); }
+function intelligence() { return buildTripIntelligence(trip, state); }
 
 function showView(view) {
   document.querySelectorAll('.tab').forEach(button => button.classList.toggle('active', button.dataset.view === view));
@@ -69,85 +34,75 @@ function showView(view) {
 
 function initTabs() {
   document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
-  document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.go)));
 }
 
 function timelineItem(day) {
-  const moment = getTripMoment();
-  const isCurrent = moment.phase === 'during' && moment.current?.id === day.id;
+  const insight = intelligence();
+  const isCurrent = insight.phase === 'during' && insight.current?.id === day.id;
   return `<button class="timeline-item ${isCurrent ? 'active' : ''}" data-day="${day.id}"><span class="date">${day.label}</span><span class="dot"></span><span class="timeline-card"><b>${day.title}${isCurrent ? ' · Today' : ''}</b><span>${day.place}</span></span></button>`;
 }
 
-function renderNextCard(moment) {
-  if (moment.phase === 'before') {
-    const tasks = incompleteChecks(3);
-    $('nextTitle').textContent = moment.daysUntil === 0 ? 'Departure day' : 'Departure prep';
-    $('nextBadge').textContent = moment.daysUntil === 0 ? 'Today' : `${moment.daysUntil} day${moment.daysUntil === 1 ? '' : 's'} to go`;
-    return `<h2 style="margin:14px 0 6px">${moment.daysUntil === 0 ? 'You leave today' : `Get ready for ${trip.days[0].title}`}</h2><p class="muted">${tasks.length ? tasks.map(task => task.label).join(' · ') : 'The preparation checklist is complete. Keep confirmations and travel documents offline.'}</p><button class="primary" data-go="readiness">Open Mission Control</button>`;
-  }
+function briefingMarkup(briefing) {
+  return `<div class="briefing-copy"><span class="eyebrow">Atlas briefing</span><h2>${briefing.headline}</h2><p>${briefing.summary}</p><div class="briefing-focus"><small>What matters</small>${briefing.focus}</div></div><div class="briefing-facts">${briefing.facts.map(fact => `<div><small>${fact.label}</small><b>${fact.value}</b></div>`).join('')}</div>`;
+}
 
-  if (moment.phase === 'during') {
-    const current = moment.current;
-    $('nextTitle').textContent = `Trip day ${moment.tripDay}`;
-    $('nextBadge').textContent = current.label;
-    return `<span class="eyebrow">You are here</span><h2 style="margin:10px 0 6px">${current.title}</h2><p class="muted">${current.place}</p><p>${current.detail}</p><button class="primary" data-open-day="${current.id}">View today’s plan</button>${moment.next ? ` <button class="ghost" data-open-day="${moment.next.id}">Next: ${moment.next.title}</button>` : ''}`;
-  }
-
-  $('nextTitle').textContent = 'Trip complete';
-  $('nextBadge').textContent = `${moment.daysSince} day${moment.daysSince === 1 ? '' : 's'} ago`;
-  return `<h2 style="margin:14px 0 6px">Welcome home</h2><p class="muted">Your itinerary, bookings, and completed preparation remain saved in Atlas.</p><button class="primary" data-go="trip">Replay the journey</button>`;
+function renderNextCard(insight) {
+  $('nextTitle').textContent = insight.phase === 'before' ? 'Departure intelligence' : insight.phase === 'during' ? `Trip day ${insight.tripDay}` : 'Trip complete';
+  $('nextBadge').textContent = insight.phase === 'before' ? `${insight.daysUntil} day${insight.daysUntil === 1 ? '' : 's'} to go` : insight.phase === 'during' ? insight.current.label : `${insight.daysSince} day${insight.daysSince === 1 ? '' : 's'} ago`;
+  const actions = insight.phase === 'before'
+    ? '<button class="primary" data-go="readiness">Open Mission Control</button>'
+    : insight.phase === 'during'
+      ? `<button class="primary" data-open-day="${insight.current.id}">Open today’s plan</button>${insight.next ? ` <button class="ghost" data-open-day="${insight.next.id}">Next: ${insight.next.title}</button>` : ''}`
+      : '<button class="primary" data-go="trip">Replay the journey</button>';
+  return `<div class="smart-briefing">${briefingMarkup(insight.briefing)}</div><div class="briefing-actions">${actions}</div>`;
 }
 
 function renderToday() {
   const readiness = checklistStatus();
   const summary = getTripSummary(trip);
-  const moment = getTripMoment();
-  const phaseCopy = moment.phase === 'before'
-    ? `${moment.daysUntil} day${moment.daysUntil === 1 ? '' : 's'} until departure.`
-    : moment.phase === 'during'
-      ? `Trip day ${moment.tripDay}: ${moment.current.title}.`
-      : `Completed ${moment.daysSince} day${moment.daysSince === 1 ? '' : 's'} ago.`;
+  const insight = intelligence();
+  const phaseCopy = insight.phase === 'before'
+    ? insight.briefing.summary
+    : insight.phase === 'during'
+      ? `Trip day ${insight.tripDay}: ${insight.current.title}.`
+      : 'Your completed journey is ready to replay.';
 
   $('heroTitle').textContent = trip.title;
   $('heroSubtitle').textContent = phaseCopy;
   $('heroScore').textContent = `${readiness.score}%`;
   $('todayMetrics').innerHTML = `
-    <div class="metric"><b>${moment.phase === 'before' ? moment.daysUntil : moment.phase === 'during' ? `Day ${moment.tripDay}` : summary.durationDays}</b><span>${moment.phase === 'before' ? 'days to departure' : moment.phase === 'during' ? 'of the journey' : 'trip days completed'}</span></div>
+    <div class="metric"><b>${insight.phase === 'before' ? insight.daysUntil : insight.phase === 'during' ? `Day ${insight.tripDay}` : summary.durationDays}</b><span>${insight.phase === 'before' ? 'days to departure' : insight.phase === 'during' ? 'of the journey' : 'trip days completed'}</span></div>
     <div class="metric"><b>${summary.bases} bases</b><span>${trip.regions.join(', ')}</span></div>
     <div class="metric"><b>${summary.confirmedBookings}</b><span>confirmed bookings</span></div>
     <div class="metric"><b>${readiness.done}/${readiness.total}</b><span>prep items complete</span></div>`;
-  $('nextCard').innerHTML = renderNextCard(moment);
+  $('nextCard').innerHTML = renderNextCard(insight);
+  $('todayIssues').innerHTML = insight.priorities.map((item, index) => `<div class="issue priority-${index + 1}"><span class="priority-rank">${index + 1}</span><div><b>${item.title}</b><div class="muted">${item.note}</div></div></div>`).join('') || '<div class="win">Atlas found nothing urgent.</div>';
 
-  const priorities = moment.phase === 'before'
-    ? [...openBookings().map(item => ({ title: item.title, note: item.notes })), ...incompleteChecks(3).map(item => ({ title: item.label, note: item.note }))].slice(0, 4)
-    : openBookings().map(item => ({ title: item.title, note: item.notes })).slice(0, 4);
-  $('todayIssues').innerHTML = priorities.map(item => `<div class="issue"><b>${item.title}</b><div class="muted">${item.note}</div></div>`).join('') || '<div class="win">Nothing urgent needs attention.</div>';
-
-  const timelineDays = moment.phase === 'during'
+  const timelineDays = insight.phase === 'during'
     ? trip.days.filter(day => localDate(day.end || day.date) >= startOfToday()).slice(0, 5)
     : trip.days;
   $('todayTimeline').innerHTML = timelineDays.map(timelineItem).join('');
 
   document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => showView(button.dataset.go)));
-  document.querySelectorAll('[data-open-day]').forEach(button => button.addEventListener('click', () => {
-    showView('trip');
-    selectDay(button.dataset.openDay);
-  }));
+  document.querySelectorAll('[data-open-day]').forEach(button => button.addEventListener('click', () => { showView('trip'); selectDay(button.dataset.openDay); }));
 }
 
 function selectDay(id) {
   const day = trip.days.find(item => item.id === id);
   if (!day) return;
+  const dayIndex = trip.days.findIndex(item => item.id === id);
+  const next = trip.days[dayIndex + 1] || null;
+  const dayBriefing = buildTripIntelligence({ ...trip, startDate: day.date, endDate: day.end || day.date, days: trip.days.slice(dayIndex) }, state, localDate(day.date)).briefing;
   persist({ selectedDayId: id });
   document.querySelectorAll('[data-day]').forEach(item => item.classList.toggle('active', item.dataset.day === id));
-  $('dayDetail').innerHTML = `<span class="eyebrow">${day.label}</span><h2>${day.title}</h2><p class="muted">${day.place}</p><span class="status-pill ${day.status === 'booked' ? 'good' : 'warn'}">${day.status}</span><div class="detail-list"><div class="detail-row"><small>Plan</small>${day.detail}</div>${day.confirmation ? `<div class="detail-row"><small>Confirmation</small><b>${day.confirmation}</b></div>` : ''}<div class="detail-row"><small>Atlas note</small>${day.status === 'open' ? 'This still needs a final decision or verified booking.' : 'This item is currently marked confirmed.'}</div></div>`;
+  $('dayDetail').innerHTML = `<span class="eyebrow">${day.label}</span><h2>${day.title}</h2><p class="muted">${day.place}</p><span class="status-pill ${day.status === 'booked' ? 'good' : 'warn'}">${day.status}</span><div class="day-briefing"><small>Atlas briefing</small><p>${dayBriefing.focus}</p><span>Next: ${next ? `${next.title} · ${next.place}` : 'Journey complete'}</span></div><div class="detail-list"><div class="detail-row"><small>Plan</small>${day.detail}</div>${day.confirmation ? `<div class="detail-row"><small>Confirmation</small><b>${day.confirmation}</b></div>` : ''}<div class="detail-row"><small>Atlas note</small>${day.status === 'open' ? 'This still needs a final decision or verified booking.' : 'This item is currently marked confirmed.'}</div></div>`;
 }
 
 function renderTrip() {
   $('tripTimeline').innerHTML = trip.days.map(timelineItem).join('');
   document.querySelectorAll('[data-day]').forEach(button => button.addEventListener('click', () => selectDay(button.dataset.day)));
-  const moment = getTripMoment();
-  selectDay(state.selectedDayId || moment.current?.id || trip.days[0].id);
+  const insight = intelligence();
+  selectDay(state.selectedDayId || insight.current?.id || trip.days[0].id);
 }
 
 function mapStops() { return getMapStops(trip); }
