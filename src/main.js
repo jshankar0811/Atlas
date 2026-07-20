@@ -1,355 +1,108 @@
-const STOPS = [
-  ['dub-air',1,'Dublin Airport','Ireland','Dublin',53.4264,-6.2499,'airport','Arrive in Ireland and transfer into Dublin.',true],
-  ['dub-city',1,'Dublin City Centre','Ireland','Dublin',53.3498,-6.2603,'sleep','First Dublin base.',true],
-  ['trinity',2,'Trinity / Book of Kells','Ireland','Dublin',53.3438,-6.2546,'book','Core Dublin booking.',true],
-  ['kilmainham',2,'Kilmainham Gaol','Ireland','Dublin',53.3420,-6.3099,'book','Must-book Dublin history stop.',true],
-  ['galway',3,'Galway','Ireland','West Ireland',53.2707,-9.0568,'sleep','West coast city base.',true],
-  ['clonmacnoise',3,'Clonmacnoise','Ireland','West Ireland',53.3277,-7.9865,'optional','Optional monastic stop.',false],
-  ['moher',4,'Cliffs of Moher','Ireland','West Ireland',52.9715,-9.4309,'sight','West coast headline stop.',true],
-  ['doolin',4,'Doolin','Ireland','West Ireland',53.0167,-9.3775,'sleep','Recommended sleep after the Cliffs.',true],
-  ['galway-alt',4,'Return to Galway alternative','Ireland','West Ireland',53.2707,-9.0568,'alternative','Fewer hotel moves, more backtracking.',false],
-  ['belfast',5,'Belfast','Northern Ireland','Northern Ireland',54.5973,-5.9301,'sleep','Base before Causeway and ferry.',true],
-  ['causeway',6,'Giant’s Causeway','Northern Ireland','Northern Ireland',55.2408,-6.5116,'sight','Basalt columns on Antrim Coast.',true],
-  ['dunluce',6,'Dunluce Castle','Northern Ireland','Northern Ireland',55.2108,-6.5796,'optional','Optional castle stop near the Causeway.',false],
-  ['belfast-ferry',7,'Belfast Ferry Terminal','Northern Ireland','Ferry',54.6310,-5.8920,'ferry','Belfast to Cairnryan ferry.',true],
-  ['cairnryan',7,'Cairnryan Ferry Port','Scotland','Ferry',54.9683,-5.0144,'ferry','Arrive in Scotland.',true],
-  ['glasgow',7,'Glasgow','Scotland','Lowlands',55.8642,-4.2518,'sleep','First Scotland overnight.',true],
-  ['loch-lomond',8,'Loch Lomond','Scotland','Lowlands',56.0790,-4.6190,'sight','Scenic start to Scotland.',true],
-  ['glencoe',9,'Glencoe','Scotland','Highlands',56.6826,-5.1023,'sight','Cinematic Highlands valley.',true],
-  ['fort-william',9,'Fort William','Scotland','Highlands',56.8198,-5.1052,'sleep','Practical Highlands base.',true],
-  ['eilean',10,'Eilean Donan Castle','Scotland','Highlands',57.2740,-5.5160,'sight','Iconic castle on the way to Skye.',true],
-  ['portree',10,'Portree / Isle of Skye','Scotland','Skye',57.4125,-6.1942,'sleep','Skye base placeholder.',true],
-  ['storr',11,'Old Man of Storr','Scotland','Skye',57.5065,-6.1831,'hike','Classic Skye viewpoint.',true],
-  ['quiraing',11,'Quiraing','Scotland','Skye',57.6439,-6.2653,'sight','Dramatic Skye landscape.',true],
-  ['inverness',12,'Inverness','Scotland','Highlands',57.4778,-4.2247,'sleep','Highlands city base.',true],
-  ['pitlochry',13,'Pitlochry / Cairngorms','Scotland','Highlands',56.7051,-3.7291,'drive','Southbound scenic transition.',true],
-  ['edinburgh',13,'Edinburgh','Scotland','Edinburgh',55.9533,-3.1883,'sleep','Final Scotland city base.',true]
-].map(([id,day,name,country,region,lat,lng,type,description,enabled]) => ({ id, day, name, country, region, lat, lng, type, description, enabled }));
+const TRIP = [
+  {id:'flight-out',date:'2026-07-23',label:'Jul 23',title:'Fly to Dublin',place:'XNA → Dublin',lat:36.2819,lng:-94.3068,type:'flight',time:'Overnight',detail:'American Airlines outbound. Keep passport, charger, medications, and one change of clothes in your personal item.',status:'booked'},
+  {id:'dublin',date:'2026-07-24',end:'2026-07-26',label:'Jul 24–26',title:'Dublin',place:'Beckett Locke',lat:53.3498,lng:-6.2603,type:'hotel',detail:'Two nights in Dublin. Arrival day should stay light; use Jul 25 for the main city sights.',status:'booked'},
+  {id:'galway',date:'2026-07-26',end:'2026-07-28',label:'Jul 26–28',title:'Galway',place:'Eyre Square Townhouse',lat:53.2743,lng:-9.0491,type:'hotel',detail:'Two-night Galway base. Pick up or continue with the Ireland rental car and keep the west-coast pace easy.',status:'booked'},
+  {id:'dingle',date:'2026-07-28',end:'2026-07-30',label:'Jul 28–30',title:'Dingle',place:'Lantern Townhouse',lat:52.1409,lng:-10.2689,type:'hotel',detail:'Two nights in Dingle. Prioritize Slea Head Drive and leave room for weather changes.',status:'booked'},
+  {id:'killarney',date:'2026-07-30',end:'2026-07-31',label:'Jul 30–31',title:'Killarney',place:'The Heights Hotel',lat:52.0599,lng:-9.5044,type:'hotel',detail:'One night. Booking reference IREnjq3ndung-6474556. Use the afternoon for Killarney National Park if timing allows.',status:'booked',confirmation:'IREnjq3ndung-6474556'},
+  {id:'drogheda',date:'2026-07-31',label:'Jul 31',title:'Return car in Drogheda',place:'Drogheda, Ireland',lat:53.7179,lng:-6.3561,type:'car',detail:'Drive from Killarney, return the Ireland rental car in Drogheda, then continue to Belfast by rail or bus. Leave a generous buffer.',status:'booked'},
+  {id:'belfast',date:'2026-07-31',end:'2026-08-01',label:'Jul 31–Aug 1',title:'Belfast',place:'Titanic Hotel Belfast',lat:54.6082,lng:-5.9097,type:'hotel',detail:'One night before the ferry. Keep ferry documents and UK ETA accessible.',status:'booked'},
+  {id:'ferry',date:'2026-08-01',label:'Aug 1',title:'Ferry to Scotland',place:'Belfast → Cairnryan',lat:54.6310,lng:-5.8920,type:'ferry',detail:'Stena Line sailing to Cairnryan. Confirm terminal transfer and required check-in time the night before.',status:'booked'},
+  {id:'cairnryan',date:'2026-08-01',label:'Aug 1',title:'Arrive in Scotland',place:'Cairnryan',lat:54.9683,lng:-5.0144,type:'transfer',detail:'Continue from Cairnryan toward Glasgow. Verify the onward coach or transfer connection.',status:'booked'},
+  {id:'glasgow',date:'2026-08-01',end:'2026-08-03',label:'Aug 1–3',title:'Glasgow',place:'Holiday Inn Express Glasgow Airport',lat:55.8642,lng:-4.4331,type:'hotel',detail:'Two nights with breakfast. Confirmation B_56773334. Aug 2 is the Highlands day.',status:'booked',confirmation:'B_56773334'},
+  {id:'highlands',date:'2026-08-02',label:'Aug 2',title:'Highlands day',place:'Glencoe / Highlands',lat:56.6826,lng:-5.1023,type:'activity',detail:'Current decision: Rabbie’s Loch Ness, Glencoe & Highlands tour versus a one-day rental car focused on Loch Lomond and Glencoe.',status:'open'},
+  {id:'train',date:'2026-08-03',label:'Aug 3',title:'Train to Edinburgh',place:'Glasgow → Edinburgh',lat:55.9533,lng:-3.1883,type:'train',detail:'ScotRail transfer. Keep ticket available offline and verify departure station and time.',status:'booked'},
+  {id:'edinburgh',date:'2026-08-03',end:'2026-08-07',label:'Aug 3–7',title:'Edinburgh',place:'Hotel not yet verified',lat:55.9533,lng:-3.1883,type:'hotel',detail:'Final Scotland base. Lodging confirmation still needs to be added to Atlas.',status:'open'},
+  {id:'flight-home',date:'2026-08-07',label:'Aug 7',title:'Fly home',place:'Edinburgh → United States',lat:55.9508,lng:-3.3615,type:'flight',detail:'Return flight. Check in when the airline window opens and allow extra airport time.',status:'booked'}
+];
 
-const BLOCKS = [
-  ['flight-out','Flight to Ireland','flight','2026-07-23','2026-07-24','blue','Overnight flight into Dublin.'],
-  ['dublin-stay','Dublin','hotel','2026-07-24','2026-07-26','orange','Two nights in Dublin.'],
-  ['galway-stay','Galway','hotel','2026-07-26','2026-07-27','purple','One night in Galway.'],
-  ['doolin-stay','Doolin','hotel','2026-07-27','2026-07-28','green','Recommended night after the Cliffs.'],
-  ['belfast-stay','Belfast','hotel','2026-07-28','2026-07-30','red','Two nights in Belfast.'],
-  ['ferry','Belfast to Cairnryan ferry','ferry','2026-07-30','2026-07-30','teal','Ferry transition into Scotland.'],
-  ['glasgow-stay','Glasgow / Loch Lomond','hotel','2026-07-30','2026-08-01','slate','Scotland arrival base.'],
-  ['fort-stay','Fort William / Glencoe','hotel','2026-08-01','2026-08-02','brown','Highlands base.'],
-  ['skye-stay','Isle of Skye','hotel','2026-08-02','2026-08-04','indigo','Draft Skye block.'],
-  ['inverness-stay','Inverness / Pitlochry','hotel','2026-08-04','2026-08-05','olive','Southbound transition.'],
-  ['edin-stay','Edinburgh','hotel','2026-08-05','2026-08-07','pink','Final Scotland city base.']
-].map(([id,label,type,start,end,color,note]) => ({ id, label, type, start, end, color, note }));
+const BOOKINGS = [
+  {title:'American Airlines outbound',category:'Flight',status:'booked',date:'Jul 23',confirmation:'NWNHLU',notes:'Overnight flight into Dublin.'},
+  {title:'Beckett Locke',category:'Lodging',status:'booked',date:'Jul 24–26',notes:'Dublin base.'},
+  {title:'Eyre Square Townhouse',category:'Lodging',status:'booked',date:'Jul 26–28',notes:'Galway base.'},
+  {title:'Lantern Townhouse',category:'Lodging',status:'booked',date:'Jul 28–30',notes:'Dingle base.'},
+  {title:'The Heights Hotel',category:'Lodging',status:'booked',date:'Jul 30–31',confirmation:'IREnjq3ndung-6474556',notes:'Killarney, 2 adults.'},
+  {title:'Ireland rental car',category:'Rental car',status:'booked',date:'Ireland segment',notes:'Return confirmed in Drogheda. Add pickup/drop-off times when available.'},
+  {title:'Titanic Hotel Belfast',category:'Lodging',status:'booked',date:'Jul 31–Aug 1',notes:'One night before ferry.'},
+  {title:'Stena Line ferry',category:'Ferry',status:'booked',date:'Aug 1',notes:'Belfast to Cairnryan. Verify terminal arrival time and transfer.'},
+  {title:'Holiday Inn Express Glasgow Airport',category:'Lodging',status:'booked',date:'Aug 1–3',confirmation:'B_56773334',notes:'Two nights; breakfast included.'},
+  {title:'ScotRail Glasgow → Edinburgh',category:'Train',status:'booked',date:'Aug 3',notes:'Save ticket offline.'},
+  {title:'Edinburgh lodging',category:'Lodging',status:'open',date:'Aug 3–7',notes:'Confirmation has not yet been verified.'},
+  {title:'Highlands day plan',category:'Activity',status:'open',date:'Aug 2',notes:'Choose Rabbie’s tour or one-day car.'},
+  {title:'Travel Guard insurance',category:'Insurance',status:'booked',date:'Full trip',notes:'Keep policy and assistance number offline.'}
+];
 
-const DEFAULT_BOOKINGS = [
-  ['bk-dublin','Dublin lodging','lodging','researching','2026-07-24','','','', 'Book two nights: Jul 24 and Jul 25.'],
-  ['bk-galway','Galway lodging','lodging','researching','2026-07-26','','','', 'One night before Cliffs/Doolin day.'],
-  ['bk-doolin','Doolin lodging','lodging','researching','2026-07-27','','','', 'Recommended. Alternative is return to Galway.'],
-  ['bk-belfast','Belfast lodging','lodging','researching','2026-07-28','','','', 'Two nights before ferry.'],
-  ['bk-ferry','Belfast to Cairnryan ferry','ferry','not started','2026-07-30','','','', 'Confirm sailing time and rental car permission.'],
-  ['bk-car','Rental car strategy','rental car','not started','2026-07-26','','','', 'Decide one car on ferry vs separate rentals.'],
-  ['bk-eta','UK ETA','admin','not started','2026-07-20','','','', 'Needed for Northern Ireland and Scotland.'],
-  ['bk-kilmainham','Kilmainham Gaol','attraction','not started','2026-07-25','','','', 'Book when ticket window opens.'],
-  ['bk-trinity','Trinity / Book of Kells','attraction','not started','2026-07-25','','','', 'Book Dublin priority.'],
-  ['bk-skye','Skye lodging','lodging','researching','2026-08-02','','','', 'Critical if Skye remains in route.']
-].map(([id,title,category,status,date,cost,confirmation,link,notes]) => ({ id,title,category,status,date,cost,confirmation,link,notes,deadline:'' }));
+const CHECKS = [
+  {group:'Documents & admin',items:[
+    ['eta','UK ETA approved for each traveler','Required for Northern Ireland and Scotland.'],
+    ['passport','Passport valid and packed','Store a photo securely on your phone.'],
+    ['insurance','Travel insurance policy saved offline','Include emergency assistance number.'],
+    ['confirmations','All confirmations downloaded','Hotels, flights, ferry, train, and rental car.']
+  ]},
+  {group:'Transport',items:[
+    ['car-times','Rental car pickup and Drogheda return times verified','Build in a large Jul 31 driving buffer.'],
+    ['drogheda-transfer','Drogheda → Belfast transport selected','Train or bus after the car return.'],
+    ['ferry-transfer','Belfast hotel → ferry terminal transfer planned','Check-in deadline matters.'],
+    ['cairnryan-transfer','Cairnryan → Glasgow transfer confirmed','Do not assume easy walk-up transit.'],
+    ['highlands','Aug 2 Highlands plan booked','Tour or rental car.']
+  ]},
+  {group:'Buy before leaving',items:[
+    ['adapter','Type G travel adapter','Ireland and the UK use Type G plugs.'],
+    ['powerbank','10,000–20,000 mAh power bank','Useful on long driving and ferry days.'],
+    ['raincoat','Waterproof rain jacket','More useful than relying only on an umbrella.'],
+    ['meds','Small travel medicine kit','Ibuprofen, Tylenol, Imodium, Pepto, allergy medicine, Band-Aids.'],
+    ['airtags','AirTag or luggage tracker','Place one in each checked bag.'],
+    ['compression','Compression socks','For the long flights.']
+  ]},
+  {group:'Pack',items:[
+    ['shirts','7–8 casual shirts and 2 nicer shirts','Plan one laundry stop.'],
+    ['layers','Light sweater or hoodie','Weather changes quickly.'],
+    ['pants','3–4 versatile pants','Favor comfortable travel pants over heavy jeans.'],
+    ['shoes','Walking shoes plus one nicer pair','Avoid bringing more than two main pairs.'],
+    ['underwear','10–12 underwear and socks','Or reduce with laundry.'],
+    ['daybag','Daypack with water bottle and rain shell','Keep passport and documents secure.'],
+    ['toiletries','Travel toiletries and prescriptions','Keep prescriptions in original packaging.']
+  ]},
+  {group:'Phone & money',items:[
+    ['esim','International roaming or eSIM active','Test before departure.'],
+    ['offline-maps','Offline maps downloaded','Dublin, west Ireland, Belfast, Glasgow, Highlands, Edinburgh.'],
+    ['wallet','Two credit cards plus debit card','Store backup card separately.'],
+    ['apps','Airline, Stena Line, ScotRail, Google Maps and WhatsApp installed','Sign in before leaving.']
+  ]}
+];
 
-const STORE = 'atlast-static-v2';
-const $ = id => document.getElementById(id);
-const esc = value => String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
-const uid = prefix => `${prefix}-${Math.random().toString(36).slice(2,9)}`;
+const STORE='atlas-travel-ready-v1';
+const oldStore='atlast-static-v2';
+const $=id=>document.getElementById(id);
+let checks=loadChecks();
+let map,routeLine,markers=[];
 
-let state = loadState();
-let map;
-let routeLine;
-let markers = [];
-let selectedId = null;
-let hotelsOnly = false;
-let calendarHotelsOnly = false;
+function loadChecks(){try{return JSON.parse(localStorage.getItem(STORE)||'{}').checks||{}}catch{return {}}}
+function saveChecks(){localStorage.setItem(STORE,JSON.stringify({checks,migratedFrom:localStorage.getItem(oldStore)?oldStore:null}))}
+function fmtDate(date){return new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function tripStatus(){const total=CHECKS.flatMap(g=>g.items).length;const done=Object.values(checks).filter(Boolean).length;return {total,done,score:Math.round(done/total*100)}}
+function openItems(){return BOOKINGS.filter(b=>b.status==='open')}
 
-function loadState(){
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORE) || '{}');
-    const fallbackEnabled = STOPS.filter(s => s.enabled).map(s => s.id);
-    return {
-      stops: saved.stops || structuredClone(STOPS),
-      blocks: saved.blocks || structuredClone(BLOCKS),
-      bookings: saved.bookings || structuredClone(DEFAULT_BOOKINGS),
-      versions: saved.versions || [
-        { id:'balanced', name:'Balanced Ireland + Scotland', enabledIds:fallbackEnabled },
-        { id:'scotland-heavy', name:'Scotland-heavy draft', enabledIds:fallbackEnabled.filter(id => id !== 'galway-alt' && id !== 'clonmacnoise') },
-        { id:'final', name:'Final locked route', enabledIds:fallbackEnabled }
-      ],
-      currentVersionId: saved.currentVersionId || 'balanced',
-      dark: !!saved.dark
-    };
-  } catch {
-    const fallbackEnabled = STOPS.filter(s => s.enabled).map(s => s.id);
-    return { stops: structuredClone(STOPS), blocks: structuredClone(BLOCKS), bookings: structuredClone(DEFAULT_BOOKINGS), versions:[{id:'balanced',name:'Balanced Ireland + Scotland',enabledIds:fallbackEnabled}], currentVersionId:'balanced', dark:false };
-  }
-}
-function save(){ localStorage.setItem(STORE, JSON.stringify(state)); }
-function currentVersion(){ return state.versions.find(v => v.id === state.currentVersionId) || state.versions[0]; }
-function isStopEnabled(id){ return currentVersion().enabledIds.includes(id); }
-function setStopEnabled(id, enabled){
-  const version = currentVersion();
-  version.enabledIds = enabled ? Array.from(new Set([...version.enabledIds, id])) : version.enabledIds.filter(x => x !== id);
-}
-function activeStops(){ return state.stops.filter(s => isStopEnabled(s.id)).filter(s => !hotelsOnly || ['sleep','airport','ferry'].includes(s.type)).sort((a,b) => a.day - b.day || a.name.localeCompare(b.name)); }
+function initTabs(){document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>showView(btn.dataset.view)));document.querySelectorAll('[data-go]').forEach(btn=>btn.addEventListener('click',()=>showView(btn.dataset.go)))}
+function showView(view){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));if(view==='map'&&map)setTimeout(()=>{map.invalidateSize();fitRoute()},100)}
 
-function initTabs(){
-  document.querySelectorAll('.tab').forEach(button => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      button.classList.add('active');
-      $(`view-${button.dataset.view}`).classList.add('active');
-      if(button.dataset.view === 'map' && map) setTimeout(() => map.invalidateSize(), 80);
-      if(button.dataset.view === 'readiness') renderReadiness();
-    });
-  });
-}
-function renderVersions(){
-  const options = state.versions.map(v => `<option value="${v.id}" ${v.id===state.currentVersionId?'selected':''}>${esc(v.name)}</option>`).join('');
-  $('versionSelect').innerHTML = options;
-  $('builderVersionSelect').innerHTML = options;
-  $('versionName').value = currentVersion().name;
-}
-function changeVersion(id){ state.currentVersionId = id; save(); renderAll(); redrawMap(); fitRoute(); }
-function duplicateVersion(){
-  const base = currentVersion();
-  const copy = { id:uid('version'), name:`${base.name} copy`, enabledIds:[...base.enabledIds] };
-  state.versions.push(copy); state.currentVersionId = copy.id; save(); renderAll(); redrawMap(); fitRoute();
-}
-function renameVersion(){ currentVersion().name = $('versionName').value.trim() || currentVersion().name; save(); renderAll(); }
-function deleteVersion(){
-  if(state.versions.length <= 1) return alert('Keep at least one route version.');
-  if(!confirm('Delete this route version?')) return;
-  state.versions = state.versions.filter(v => v.id !== state.currentVersionId);
-  state.currentVersionId = state.versions[0].id; save(); renderAll(); redrawMap(); fitRoute();
-}
+function renderToday(){const s=tripStatus();$('heroScore').textContent=`${s.score}%`;$('todayMetrics').innerHTML=`<div class="metric"><b>15 days</b><span>Jul 23–Aug 7</span></div><div class="metric"><b>9 bases</b><span>Ireland, NI & Scotland</span></div><div class="metric"><b>${BOOKINGS.filter(b=>b.status==='booked').length}</b><span>confirmed bookings</span></div><div class="metric"><b>${openItems().length}</b><span>loose ends</span></div>`;
+$('nextCard').innerHTML=`<h2 style="margin:14px 0 6px">Complete final travel prep</h2><p class="muted">Apply for the UK ETA, verify Edinburgh lodging, choose the Highlands plan, and lock the Drogheda/Belfast/ferry transfers.</p><button class="primary" data-go="readiness">Open Mission Control</button>`;
+$('todayIssues').innerHTML=openItems().map(b=>`<div class="issue"><b>${b.title}</b><div class="muted">${b.notes}</div></div>`).join('')||'<div class="win">No major loose ends.</div>';
+$('todayTimeline').innerHTML=TRIP.map(t=>timelineItem(t)).join('');document.querySelectorAll('[data-go="readiness"]').forEach(b=>b.addEventListener('click',()=>showView('readiness')))}
+function timelineItem(t){return `<button class="timeline-item" data-day="${t.id}"><span class="date">${t.label}</span><span class="dot"></span><span class="timeline-card"><b>${t.title}</b><span>${t.place}</span></span></button>`}
+function renderTrip(){ $('tripTimeline').innerHTML=TRIP.map(t=>timelineItem(t)).join('');document.querySelectorAll('[data-day]').forEach(btn=>btn.addEventListener('click',()=>selectDay(btn.dataset.day)));selectDay(TRIP[0].id)}
+function selectDay(id){const t=TRIP.find(x=>x.id===id);if(!t)return;document.querySelectorAll('[data-day]').forEach(x=>x.classList.toggle('active',x.dataset.day===id));$('dayDetail').innerHTML=`<span class="eyebrow">${t.label}</span><h2>${t.title}</h2><p class="muted">${t.place}</p><span class="status-pill ${t.status==='booked'?'good':'warn'}">${t.status}</span><div class="detail-list"><div class="detail-row"><small>Plan</small>${t.detail}</div>${t.confirmation?`<div class="detail-row"><small>Confirmation</small><b>${t.confirmation}</b></div>`:''}<div class="detail-row"><small>Atlas note</small>${t.status==='open'?'This still needs a final decision or verified booking.':'This item is currently marked confirmed.'}</div></div>`}
 
-function initMap(){
-  if(!window.L) return;
-  map = L.map('map').setView([54.6,-6.0],6);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19, attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
-  redrawMap(); fitRoute();
-}
-function redrawMap(){
-  if(!map) return;
-  markers.forEach(marker => map.removeLayer(marker)); markers = [];
-  if(routeLine) map.removeLayer(routeLine);
-  const stops = activeStops();
-  const points = stops.map(s => [s.lat,s.lng]);
-  if(points.length) routeLine = L.polyline(points,{ color:'#123b25', weight:4, opacity:.75 }).addTo(map);
-  stops.forEach(stop => {
-    const icon = L.divIcon({ className:'', html:`<div class="marker ${stop.id === selectedId ? 'selected' : ''}">${stop.day}</div>`, iconSize:[28,28], iconAnchor:[14,14] });
-    const marker = L.marker([stop.lat,stop.lng],{ icon }).addTo(map);
-    marker.on('click', () => selectStop(stop.id, true));
-    marker.bindPopup(`<b>Day ${stop.day} · ${esc(stop.name)}</b><br>${esc(stop.description)}<br><em>${esc(stop.region)} · ${esc(stop.type)}</em>`);
-    markers.push(marker);
-  });
-}
-function fitRoute(){ const points = activeStops().map(s => [s.lat,s.lng]); if(map && points.length) map.fitBounds(points,{ padding:[45,45] }); }
-function selectStop(id, pan=false){
-  selectedId = id;
-  const stop = state.stops.find(s => s.id === id); if(!stop) return;
-  $('selectedStop').innerHTML = `<h3>${esc(stop.name)}</h3><p class="small">Day ${stop.day} · ${esc(stop.country)} · ${esc(stop.region)} · ${esc(stop.type)}</p><p>${esc(stop.description)}</p><div class="actions"><button data-edit-stop="${stop.id}">Edit</button><button data-toggle-stop="${stop.id}">${isStopEnabled(stop.id) ? 'Disable' : 'Enable'}</button></div>`;
-  if(pan && map) map.setView([stop.lat,stop.lng], Math.max(map.getZoom(),9), { animate:true });
-  renderAll(); redrawMap();
-}
-function toggleStop(id){ setStopEnabled(id, !isStopEnabled(id)); save(); renderAll(); redrawMap(); renderReadiness(); }
-function deleteStop(id){ if(confirm('Delete this stop?')){ state.stops = state.stops.filter(s => s.id !== id); state.versions.forEach(v => v.enabledIds = v.enabledIds.filter(x => x !== id)); save(); renderAll(); redrawMap(); renderReadiness(); } }
-function editStop(id){
-  const stop = state.stops.find(s => s.id === id); if(!stop) return;
-  const form = $('stopForm');
-  form.elements.id.value = stop.id; form.elements.name.value = stop.name; form.elements.day.value = stop.day; form.elements.lat.value = stop.lat; form.elements.lng.value = stop.lng; form.elements.country.value = stop.country; form.elements.region.value = stop.region; form.elements.type.value = stop.type; form.elements.enabled.value = String(isStopEnabled(stop.id)); form.elements.description.value = stop.description;
-  document.querySelector('[data-view="builder"]').click();
-}
-function saveStop(event){
-  event.preventDefault();
-  const f = event.currentTarget.elements;
-  const stop = { id:f.id.value || uid('stop'), name:f.name.value.trim() || 'New stop', day:Number(f.day.value || 1), lat:Number(f.lat.value), lng:Number(f.lng.value), country:f.country.value.trim() || 'Unknown', region:f.region.value.trim() || 'Custom', type:f.type.value, description:f.description.value.trim() || 'Custom stop.' };
-  if(!Number.isFinite(stop.lat) || !Number.isFinite(stop.lng)) return alert('Latitude and longitude are required.');
-  const index = state.stops.findIndex(s => s.id === stop.id);
-  if(index >= 0) state.stops[index] = stop; else state.stops.push(stop);
-  setStopEnabled(stop.id, f.enabled.value === 'true');
-  event.currentTarget.reset(); f.id.value = ''; save(); renderAll(); redrawMap(); fitRoute(); renderReadiness();
-}
+function initMap(){if(!window.L)return;map=L.map('map',{zoomControl:true}).setView([54.5,-7],6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);drawMap();fitRoute()}
+function mapStops(){return TRIP.filter(t=>Number.isFinite(t.lat)&&Number.isFinite(t.lng)&&!['flight'].includes(t.type))}
+function drawMap(){markers.forEach(m=>map.removeLayer(m));markers=[];if(routeLine)map.removeLayer(routeLine);const stops=mapStops();routeLine=L.polyline(stops.map(s=>[s.lat,s.lng]),{color:'#173f2b',weight:4,opacity:.75}).addTo(map);stops.forEach((s,i)=>{const icon=L.divIcon({className:'',html:`<div class="marker">${i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]});const marker=L.marker([s.lat,s.lng],{icon}).addTo(map).bindPopup(`<b>${s.title}</b><br>${s.place}<br><small>${s.label}</small>`);marker.on('click',()=>selectMapStop(s.id));markers.push(marker)})}
+function fitRoute(){if(map){const pts=mapStops().map(s=>[s.lat,s.lng]);if(pts.length)map.fitBounds(pts,{padding:[35,35]})}}
+function renderStopList(){const q=$('stopSearch').value.toLowerCase().trim();const stops=mapStops().filter(s=>!q||JSON.stringify(s).toLowerCase().includes(q));$('stopList').innerHTML=stops.map((s,i)=>`<div class="stop-card" data-map-stop="${s.id}"><span class="stop-num">${i+1}</span><div><b>${s.title}</b><span>${s.label} · ${s.place}</span></div></div>`).join('');document.querySelectorAll('[data-map-stop]').forEach(x=>x.addEventListener('click',()=>selectMapStop(x.dataset.mapStop)))}
+function selectMapStop(id){const s=TRIP.find(x=>x.id===id);if(!s||!map)return;map.setView([s.lat,s.lng],Math.max(map.getZoom(),9));const idx=mapStops().findIndex(x=>x.id===id);if(markers[idx])markers[idx].openPopup()}
 
-const CAL_START = '2026-07-23';
-const CAL_DAYS = 16;
-function addDays(date,n){ const d = new Date(date+'T00:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
-function diffDays(a,b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00')) / 86400000); }
-function fmt(date){ return new Date(date+'T00:00:00').toLocaleDateString('en-US',{ month:'short', day:'numeric' }); }
-function dow(date){ return new Date(date+'T00:00:00').toLocaleDateString('en-US',{ weekday:'short' }); }
-function coveredNights(){
-  const nights = [];
-  for(let i=1;i<CAL_DAYS-1;i++){
-    const date = addDays(CAL_START,i);
-    if(date < '2026-07-24' || date > '2026-08-06') continue;
-    const covering = state.blocks.filter(b => b.type === 'hotel' && b.start <= date && b.end > date);
-    nights.push({ date, covering });
-  }
-  return nights;
-}
-function renderCalendar(){
-  const dates = Array.from({ length:CAL_DAYS }, (_,i) => addDays(CAL_START,i));
-  const blocks = state.blocks.filter(b => !calendarHotelsOnly || b.type === 'hotel');
-  const header = `<div class="cal-head"><div>Block</div>${dates.map(d => `<div><b>${fmt(d)}</b><br>${dow(d)}</div>`).join('')}</div>`;
-  const rows = blocks.map(b => {
-    const start = Math.max(0,diffDays(CAL_START,b.start));
-    let end = diffDays(CAL_START,b.end); if(b.type === 'ferry') end = start + 1; end = Math.max(start+1, Math.min(CAL_DAYS,end));
-    const span = end - start;
-    const cells = dates.map(() => '<div class="cal-cell"></div>').join('');
-    const nights = b.type === 'hotel' ? `${diffDays(b.start,b.end)} night(s)` : b.type;
-    return `<div class="cal-row"><div class="cal-label"><b>${esc(b.label)}</b><span>${esc(nights)}</span></div>${cells}<div class="cal-block ${esc(b.color)}" style="grid-column:${start+2}/span ${span};grid-row:1" title="${esc(b.note)}">${esc(b.label)}</div></div>`;
-  }).join('');
-  $('calendarGrid').innerHTML = header + rows; renderCoverage();
-}
-function renderCoverage(){
-  $('coverageGrid').innerHTML = coveredNights().map(n => {
-    const cls = n.covering.length === 1 ? 'good' : n.covering.length === 0 ? 'bad' : 'warn';
-    const text = n.covering.length === 1 ? n.covering[0].label : n.covering.length === 0 ? 'No stay shown' : n.covering.map(x => x.label).join(' + ');
-    return `<div class="coverage-item ${cls}"><b>${fmt(n.date)} night</b><p class="small">${esc(text)}</p></div>`;
-  }).join('');
-}
-function saveBlock(event){
-  event.preventDefault();
-  const f = event.currentTarget.elements;
-  const block = { id:f.id.value || uid('block'), label:f.label.value.trim() || 'New stay', type:f.type.value, start:f.start.value, end:f.end.value, color:f.color.value, cost:f.cost.value.trim(), note:f.note.value.trim() };
-  const index = state.blocks.findIndex(b => b.id === block.id);
-  if(index >= 0) state.blocks[index] = block; else state.blocks.push(block);
-  event.currentTarget.reset(); f.id.value = ''; save(); renderAll(); renderReadiness();
-}
-function deleteBlock(id){ if(confirm('Delete this calendar block?')){ state.blocks = state.blocks.filter(b => b.id !== id); save(); renderAll(); renderReadiness(); } }
+function renderBookings(){const booked=BOOKINGS.filter(b=>b.status==='booked').length;$('bookingMetrics').innerHTML=`<div class="metric"><b>${BOOKINGS.length}</b><span>tracked items</span></div><div class="metric"><b>${booked}</b><span>confirmed</span></div><div class="metric"><b>${BOOKINGS.length-booked}</b><span>needs attention</span></div><div class="metric"><b>1</b><span>car return: Drogheda</span></div>`;$('bookingList').innerHTML=BOOKINGS.map(b=>`<article class="booking-card"><span class="eyebrow">${b.category}</span><h3>${b.title}</h3><p>${b.date}</p><span class="status-pill ${b.status==='booked'?'good':'warn'}">${b.status}</span>${b.confirmation?`<span class="status-pill"># ${b.confirmation}</span>`:''}<p>${b.notes}</p></article>`).join('')}
 
-function saveBooking(event){
-  event.preventDefault();
-  const f = event.currentTarget.elements;
-  const booking = { id:f.id.value || uid('booking'), title:f.title.value.trim() || 'New booking', category:f.category.value, status:f.status.value, date:f.date.value, cost:f.cost.value.trim(), confirmation:f.confirmation.value.trim(), link:f.link.value.trim(), deadline:f.deadline.value, notes:f.notes.value.trim() };
-  const index = state.bookings.findIndex(b => b.id === booking.id);
-  if(index >= 0) state.bookings[index] = booking; else state.bookings.push(booking);
-  event.currentTarget.reset(); f.id.value = ''; save(); renderBookings(); renderReadiness();
-}
-function editBooking(id){
-  const b = state.bookings.find(x => x.id === id); if(!b) return;
-  const f = $('bookingForm').elements;
-  f.id.value = b.id; f.title.value = b.title; f.category.value = b.category; f.status.value = b.status; f.date.value = b.date || ''; f.cost.value = b.cost || ''; f.confirmation.value = b.confirmation || ''; f.link.value = b.link || ''; f.deadline.value = b.deadline || ''; f.notes.value = b.notes || '';
-}
-function deleteBooking(id){ if(confirm('Delete this booking?')){ state.bookings = state.bookings.filter(b => b.id !== id); save(); renderBookings(); renderReadiness(); } }
-function statusClass(status){ return ['booked','paid'].includes(status) ? 'good' : status === 'researching' ? 'warn' : 'bad'; }
-function renderBookings(){
-  const counts = state.bookings.reduce((acc,b) => { acc[b.status] = (acc[b.status]||0)+1; return acc; }, {});
-  const totalCost = state.bookings.reduce((sum,b) => sum + (Number(String(b.cost).replace(/[^0-9.]/g,'')) || 0), 0);
-  $('bookingSummary').innerHTML = `<div class="stat-card"><b>${state.bookings.length}</b><span class="small">total items</span></div><div class="stat-card"><b>${counts.booked || 0}</b><span class="small">booked</span></div><div class="stat-card"><b>${counts.paid || 0}</b><span class="small">paid</span></div><div class="stat-card"><b>$${Math.round(totalCost)}</b><span class="small">tracked cost</span></div>`;
-  $('bookingList').innerHTML = state.bookings.map(b => `<div class="booking-card"><div><b>${esc(b.title)}</b><p class="small">${esc(b.category)} · ${esc(b.date || 'no date')} ${b.deadline ? '· cancel by '+esc(b.deadline) : ''}</p><span class="status-pill ${statusClass(b.status)}">${esc(b.status)}</span>${b.cost ? `<span class="status-pill">${esc(b.cost)}</span>` : ''}${b.confirmation ? `<span class="status-pill"># ${esc(b.confirmation)}</span>` : ''}<p class="small">${esc(b.notes || '')}</p></div><div class="actions"><button data-edit-booking="${b.id}">Edit</button><button class="danger" data-delete-booking="${b.id}">Delete</button></div></div>`).join('');
-}
+function renderReadiness(){const s=tripStatus();$('readinessScore').textContent=`${s.score}%`;$('progressBar').style.width=`${s.score}%`;$('progressLabel').textContent=`${s.done} of ${s.total} preparation items complete`;$('scoreCopy').textContent=s.score>=90?'Nearly ready. Focus only on the final transport and document checks.':s.score>=60?'Good progress. Finish the unresolved transport and booking items next.':'Start with documents, critical transport, and the Walmart purchase list.';$('checkGroups').innerHTML=CHECKS.map(g=>`<section class="panel check-group"><span class="eyebrow">Checklist</span><h3>${g.group}</h3>${g.items.map(([id,label,note])=>`<div class="check-row"><input type="checkbox" id="${id}" data-check="${id}" ${checks[id]?'checked':''}><label for="${id}">${label}<small>${note}</small></label></div>`).join('')}</section>`).join('');document.querySelectorAll('[data-check]').forEach(c=>c.addEventListener('change',()=>{checks[c.dataset.check]=c.checked;saveChecks();renderReadiness();renderToday()}))}
 
-function readinessData(){
-  const issues = [];
-  const wins = [];
-  const nights = coveredNights();
-  const gaps = nights.filter(n => n.covering.length === 0);
-  const overlaps = nights.filter(n => n.covering.length > 1);
-  if(gaps.length) issues.push(`${gaps.length} lodging night(s) have no stay shown.`); else wins.push('Every trip night has lodging coverage.');
-  if(overlaps.length) issues.push(`${overlaps.length} night(s) have overlapping lodging.`); else wins.push('No lodging overlaps detected.');
-  if(activeStops().length < 8) issues.push('Current route version has very few enabled stops.'); else wins.push(`${activeStops().length} stops enabled in current route version.`);
-  const important = ['ferry','rental car','admin','lodging'];
-  const criticalOpen = state.bookings.filter(b => important.includes(b.category) && !['booked','paid'].includes(b.status));
-  if(criticalOpen.length) issues.push(`${criticalOpen.length} critical booking item(s) are not booked or paid.`); else wins.push('Critical lodging/admin/transport bookings are marked booked or paid.');
-  const ferryStop = activeStops().some(s => s.type === 'ferry');
-  if(!ferryStop) issues.push('Current route version has no ferry stop enabled.'); else wins.push('Ferry transition is represented in the map route.');
-  const skyeEnabled = activeStops().some(s => s.region === 'Skye');
-  const skyeBooked = state.bookings.some(b => b.title.toLowerCase().includes('skye') && ['booked','paid'].includes(b.status));
-  if(skyeEnabled && !skyeBooked) issues.push('Skye is in the route, but Skye lodging is not marked booked.');
-  const totalChecks = 6;
-  const score = Math.max(0, Math.round(((totalChecks - issues.length) / totalChecks) * 100));
-  return { issues, wins, score };
-}
-function renderReadiness(){
-  if(!$('readinessScore')) return;
-  const data = readinessData();
-  $('readinessScore').textContent = `${data.score}%`;
-  $('readinessIssues').innerHTML = data.issues.length ? data.issues.map(x => `<div class="issue-card bad">${esc(x)}</div>`).join('') : '<div class="issue-card good">Nothing major is currently flagged.</div>';
-  $('readinessWins').innerHTML = data.wins.length ? data.wins.map(x => `<div class="issue-card good">${esc(x)}</div>`).join('') : '<div class="issue-card">No wins calculated yet.</div>';
-}
-
-function renderStopList(){
-  const q = $('stopSearch').value.toLowerCase().trim();
-  const stops = state.stops.filter(s => !q || JSON.stringify(s).toLowerCase().includes(q)).sort((a,b)=>a.day-b.day || a.name.localeCompare(b.name));
-  $('stopList').innerHTML = stops.map(s => `<div class="stop-card ${isStopEnabled(s.id) ? '' : 'off'}" data-select-stop="${s.id}"><input type="checkbox" ${isStopEnabled(s.id)?'checked':''} data-toggle-stop="${s.id}"><div><b>Day ${String(s.day).padStart(2,'0')} · ${esc(s.name)}</b><span>${esc(s.region)} · ${esc(s.type)}</span></div><button data-edit-stop="${s.id}">Edit</button></div>`).join('');
-}
-function renderBuilderStops(){
-  $('builderStops').innerHTML = state.stops.slice().sort((a,b)=>a.day-b.day || a.name.localeCompare(b.name)).map(s => `<div class="stop-card ${isStopEnabled(s.id)?'':'off'}"><input type="checkbox" ${isStopEnabled(s.id)?'checked':''} data-toggle-stop="${s.id}"><div><b>Day ${String(s.day).padStart(2,'0')} · ${esc(s.name)}</b><span>${esc(s.country)} · ${esc(s.region)} · ${esc(s.type)}</span></div><div><button data-edit-stop="${s.id}">Edit</button><button class="danger" data-delete-stop="${s.id}">Delete</button></div></div>`).join('');
-}
-function renderBuilderBlocks(){
-  $('builderBlocks').innerHTML = state.blocks.map(b => `<div class="stop-card"><div></div><div><b>${esc(b.label)}</b><span>${fmt(b.start)} → ${fmt(b.end)} · ${esc(b.type)} · ${esc(b.color)}</span></div><button class="danger" data-delete-block="${b.id}">Delete</button></div>`).join('');
-}
-function routeSummary(){
-  const route = activeStops().map(s => `Day ${s.day}: ${s.name}`).join('\n');
-  const stays = state.blocks.filter(b => b.type === 'hotel').map(b => `${b.start} to ${b.end}: ${b.label}`).join('\n');
-  const bookings = state.bookings.map(b => `${b.title}: ${b.status}`).join('\n');
-  return `Route version: ${currentVersion().name}\n\nRoute stops:\n${route}\n\nLodging blocks:\n${stays}\n\nBookings:\n${bookings}`;
-}
-function checkGapsText(){
-  return coveredNights().map(n => `${fmt(n.date)} night: ${n.covering.length ? n.covering.map(x=>x.label).join(' + ') : 'NO STAY SHOWN'}`).join('\n');
-}
-function addMessage(text,user=false){
-  const div = document.createElement('div'); div.className = `msg ${user ? 'user' : ''}`; div.innerHTML = esc(text).replaceAll('\n','<br>'); $('messages').appendChild(div); $('messages').scrollTop = $('messages').scrollHeight;
-}
-function plannerReply(q){
-  const text = q.toLowerCase();
-  if(text.includes('ready')){ const d = readinessData(); return `Readiness: ${d.score}%\n\nNeeds attention:\n${d.issues.join('\n') || 'Nothing major flagged.'}`; }
-  if(text.includes('gap') || text.includes('calendar') || text.includes('hotel') || text.includes('stay')) return checkGapsText();
-  if(text.includes('book')) return 'Book first: Dublin/Galway/Doolin/Belfast lodging, Belfast to Cairnryan ferry, rental car strategy, UK ETA, Kilmainham, Trinity/Book of Kells, and Scotland lodging if Skye stays in.';
-  if(text.includes('dublin')) return 'For this route, 2 nights in Dublin is cleaner than 3 because you need to protect Galway, Cliffs/Doolin, Belfast, the ferry, and Scotland time.';
-  if(text.includes('ferry') || text.includes('rental') || text.includes('car')) return 'Main transport decision: one rental car on the Belfast to Cairnryan ferry, or separate Ireland and Scotland rentals. Separate rentals are cleaner administratively; one car is easier with luggage if allowed.';
-  if(text.includes('skye')) return 'Skye is worth it only if you can give it breathing room. Avoid a one-night drive-by unless you accept an aggressive Scotland segment.';
-  if(text.includes('prompt')) return 'Paste this into ChatGPT:\n\nHelp me refine this trip in Atlast. I want minimal hotel chaos, strong scenery, and full lodging coverage. Current app state:\n\n' + routeSummary();
-  return 'I can help with route pacing, lodging gaps, readiness, booking priorities, ferry/rental strategy, Dublin vs Doolin decisions, and Scotland pacing.';
-}
-function sendAgent(){ const input = $('agentInput'); const q = input.value.trim(); if(!q) return; addMessage(q,true); input.value=''; setTimeout(()=>addMessage(plannerReply(q)),120); }
-function exportJson(){ const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'atlast-trip-state.json'; a.click(); }
-function resetApp(){ if(!confirm('Reset all app data?')) return; localStorage.removeItem(STORE); state = loadState(); renderAll(); redrawMap(); fitRoute(); renderReadiness(); }
-function renderAll(){ renderVersions(); renderStopList(); renderBuilderStops(); renderCalendar(); renderBuilderBlocks(); renderBookings(); renderReadiness(); }
-function bindEvents(){
-  initTabs();
-  $('fitRoute').addEventListener('click', fitRoute);
-  $('toggleHotels').addEventListener('click', () => { hotelsOnly = !hotelsOnly; $('toggleHotels').classList.toggle('primary',hotelsOnly); redrawMap(); renderStopList(); fitRoute(); });
-  $('toggleTheme').addEventListener('click', () => { document.body.classList.toggle('dark'); state.dark = document.body.classList.contains('dark'); save(); });
-  $('versionSelect').addEventListener('change', event => changeVersion(event.target.value));
-  $('builderVersionSelect').addEventListener('change', event => changeVersion(event.target.value));
-  $('duplicateVersion').addEventListener('click', duplicateVersion);
-  $('renameVersion').addEventListener('click', renameVersion);
-  $('deleteVersion').addEventListener('click', deleteVersion);
-  $('stopSearch').addEventListener('input', renderStopList);
-  $('stopForm').addEventListener('submit', saveStop);
-  $('clearStopForm').addEventListener('click', () => $('stopForm').reset());
-  $('blockForm').addEventListener('submit', saveBlock);
-  $('clearBlockForm').addEventListener('click', () => $('blockForm').reset());
-  $('bookingForm').addEventListener('submit', saveBooking);
-  $('clearBookingForm').addEventListener('click', () => $('bookingForm').reset());
-  $('showAllBlocks').addEventListener('click', () => { calendarHotelsOnly = false; $('showAllBlocks').classList.add('primary'); $('showHotelBlocks').classList.remove('primary'); renderCalendar(); });
-  $('showHotelBlocks').addEventListener('click', () => { calendarHotelsOnly = true; $('showHotelBlocks').classList.add('primary'); $('showAllBlocks').classList.remove('primary'); renderCalendar(); });
-  $('jumpAddStay').addEventListener('click', () => document.querySelector('[data-view="builder"]').click());
-  $('exportJson').addEventListener('click', exportJson);
-  $('resetApp').addEventListener('click', resetApp);
-  $('sendAgent').addEventListener('click', sendAgent);
-  $('agentInput').addEventListener('keydown', event => { if(event.key === 'Enter') sendAgent(); });
-  document.addEventListener('click', event => {
-    const select = event.target.closest('[data-select-stop]'); if(select) selectStop(select.dataset.selectStop,true);
-    const toggle = event.target.closest('[data-toggle-stop]'); if(toggle){ event.stopPropagation(); toggleStop(toggle.dataset.toggleStop); }
-    const edit = event.target.closest('[data-edit-stop]'); if(edit){ event.stopPropagation(); editStop(edit.dataset.editStop); }
-    const del = event.target.closest('[data-delete-stop]'); if(del){ event.stopPropagation(); deleteStop(del.dataset.deleteStop); }
-    const delBlock = event.target.closest('[data-delete-block]'); if(delBlock){ event.stopPropagation(); deleteBlock(delBlock.dataset.deleteBlock); }
-    const editBookingBtn = event.target.closest('[data-edit-booking]'); if(editBookingBtn){ event.stopPropagation(); editBooking(editBookingBtn.dataset.editBooking); }
-    const delBookingBtn = event.target.closest('[data-delete-booking]'); if(delBookingBtn){ event.stopPropagation(); deleteBooking(delBookingBtn.dataset.deleteBooking); }
-  });
-}
-function init(){
-  if(state.dark) document.body.classList.add('dark');
-  bindEvents();
-  addMessage('Planner helper ready. Ask about gaps, readiness, bookings, ferry logistics, Skye pacing, or type “prompt” to generate a planning prompt from your route.');
-  renderAll(); initMap();
-}
-document.addEventListener('DOMContentLoaded', init);
+function init(){initTabs();renderToday();renderTrip();renderStopList();renderBookings();renderReadiness();initMap();$('fitRoute').addEventListener('click',fitRoute);$('stopSearch').addEventListener('input',renderStopList);$('printTrip').addEventListener('click',()=>window.print());$('resetChecks').addEventListener('click',()=>{if(confirm('Reset every readiness checkbox?')){checks={};saveChecks();renderReadiness();renderToday()}})}
+document.addEventListener('DOMContentLoaded',init);
