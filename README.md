@@ -1,6 +1,6 @@
-# Atlast
+# Atlas
 
-Atlast is a customizable AI-assisted travel planning app. It started as an Ireland + Scotland trip planner, but the goal is broader: a map-first travel command center where you can build routes manually, manage lodging coverage, track bookings, and eventually let an AI agent suggest and apply route/calendar edits.
+Atlas is a customizable AI-assisted travel planning app. It started as an Ireland + Scotland trip planner, but the goal is broader: a map-first travel command center where you can build routes manually, manage lodging coverage, track bookings, and eventually let an AI agent suggest and apply route/calendar edits.
 
 ## Current app goals
 
@@ -13,18 +13,17 @@ Atlast is a customizable AI-assisted travel planning app. It started as an Irela
 
 ## Current prototype
 
-The current version is a static front-end prototype intended to run locally or on GitHub Pages/Netlify. Data is stored in browser `localStorage`, with export/import and cloud sync planned later.
+The current version uses Next.js, React, TypeScript, and React Leaflet. Data is stored in browser `localStorage`, with export/import and cloud sync planned later.
 
 ## Product direction
 
-Atlast should become a full-fledged travel agent app: manual controls when you know what you want, and an embedded planning agent when you want help reasoning through trade-offs.
+Atlas should become a full-fledged travel agent app: manual controls when you know what you want, and an embedded planning agent when you want help reasoning through trade-offs.
 
 ## Run locally
 
-Open `index.html` directly in a browser, or serve the folder with a simple static server.
-
 ```bash
-python -m http.server 5173
+npm install
+npm run dev
 ```
 
-Then open `http://localhost:5173`.
+Then open the local address printed by Next.js. Run `npm run build` to create the production-ready static export in `out/`.

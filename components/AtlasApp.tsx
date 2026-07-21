@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { trip, type TripDay } from '@/lib/trip';
 
 const TripMap = dynamic(() => import('./TripMap'), { ssr:false, loading:() => <div className="empty-state">Loading route map…</div> });
@@ -10,16 +10,17 @@ type JournalEntry = { notes:string; moment:string; food:string; spend:string; ra
 type SavedState = { checks:Record<string,boolean>; selectedDayId:string; journal:Record<string,JournalEntry> };
 const initial:SavedState = { checks:{}, selectedDayId:trip.days[0].id, journal:{} };
 const storageKey = `atlas:${trip.id}:next`;
+const emptyJournalEntry:JournalEntry = { notes:'', moment:'', food:'', spend:'', rating:'' };
 
 function date(value:string){ return new Date(`${value}T12:00:00`); }
 function today(){ const n=new Date(); return new Date(n.getFullYear(),n.getMonth(),n.getDate(),12); }
-function phase(){ const now=today(), start=date(trip.startDate), end=date(trip.endDate); const current=trip.days.find(d=>now>=date(d.date)&&now<=date(d.end||d.date)); const next=trip.days.find(d=>date(d.date)>now); if(now<start)return{kind:'before' as const,count:Math.round((+start-+now)/86400000),current:null,next:trip.days[0]}; if(now>end)return{kind:'after' as const,count:Math.round((+now-+end)/86400000),current:null,next:null}; return{kind:'during' as const,count:Math.round((+now-+start)/86400000)+1,current:current||next||trip.days.at(-1)!,next}; }
+function phase(){ const now=today(), start=date(trip.startDate), end=date(trip.endDate); const active=trip.days.filter(d=>now>=date(d.date)&&(d.end?now<date(d.end):now<=date(d.date))); const current=active.at(-1); const next=trip.days.find(d=>date(d.date)>now); if(now<start)return{kind:'before' as const,count:Math.round((+start-+now)/86400000),current:null,next:trip.days[0]}; if(now>end)return{kind:'after' as const,count:Math.round((+now-+end)/86400000),current:null,next:null}; return{kind:'during' as const,count:Math.round((+now-+start)/86400000)+1,current:current||next||trip.days.at(-1)!,next}; }
 
 export default function AtlasApp(){
   const [view,setView]=useState<View>('today');
   const [state,setState]=useState<SavedState>(initial);
   const [hydrated,setHydrated]=useState(false);
-  useEffect(()=>{ try{ const raw=localStorage.getItem(storageKey); if(raw)setState({...initial,...JSON.parse(raw)}); }finally{setHydrated(true)} },[]);
+  useEffect(()=>{ try{ const raw=localStorage.getItem(storageKey); if(raw){ const saved=JSON.parse(raw) as Partial<SavedState>; setState({ checks:saved.checks&&typeof saved.checks==='object'?saved.checks:{}, selectedDayId:typeof saved.selectedDayId==='string'?saved.selectedDayId:initial.selectedDayId, journal:saved.journal&&typeof saved.journal==='object'?saved.journal:{} }); } }catch{ localStorage.removeItem(storageKey); }finally{setHydrated(true)} },[]);
   useEffect(()=>{ if(hydrated)localStorage.setItem(storageKey,JSON.stringify(state)); },[state,hydrated]);
   const moment=phase();
   const allChecks=trip.checklists.flatMap(g=>g.items);
@@ -33,8 +34,8 @@ export default function AtlasApp(){
   const briefing=moment.kind==='before'?`${moment.count} days until departure. Close the remaining booking and transport gaps first.`:moment.kind==='during'?`Trip day ${moment.count}: ${moment.current.title}. ${moment.current.detail}`:'The journey is complete. Your notes and memories remain in Atlas.';
 
   function chooseDay(day:TripDay){ setState(s=>({...s,selectedDayId:day.id})); }
-  function updateJournal(field:keyof JournalEntry,value:string){ setState(s=>({...s,journal:{...s.journal,[selected.id]:{notes:'',moment:'',food:'',spend:'',rating:'',...s.journal[selected.id],[field]:value}}})); }
-  const entry={notes:'',moment:'',food:'',spend:'',rating:'',...state.journal[selected.id]};
+  function updateJournal(field:keyof JournalEntry,value:string){ setState(s=>({...s,journal:{...s.journal,[selected.id]:{...(s.journal[selected.id]??emptyJournalEntry),[field]:value}}})); }
+  const entry=state.journal[selected.id]??emptyJournalEntry;
 
   return <div className="atlas-shell">
     <header className="topbar"><div className="brand"><span className="brand-mark">A</span><div><h1>Atlas</h1><p>{trip.title} · {trip.subtitle}</p></div></div><nav className="tabs">{(['today','trip','map','bookings','readiness','journal'] as View[]).map(v=><button key={v} className={`tab ${view===v?'active':''}`} onClick={()=>setView(v)}>{v==='readiness'?'Mission Control':v[0].toUpperCase()+v.slice(1)}</button>)}</nav></header>
