@@ -2,15 +2,23 @@
 
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
-import type { TripDay } from '@/lib/trip';
+import { trip, type TripDay } from '@/lib/trip';
 
 const icon = L.divIcon({ className:'', html:'<div class="marker">•</div>', iconSize:[32,32], iconAnchor:[16,16] });
 
 export default function TripMap({ days }:{ days:TripDay[] }) {
-  const points = days.map(day => [day.lat, day.lng] as [number, number]);
+  const visibleDays = days.filter(day => day.type !== 'flight');
+  const styles = {
+    drive:{ color:'#173f2b', weight:4, opacity:.8 },
+    ferry:{ color:'#2474a6', weight:4, opacity:.9, dashArray:'8 10' },
+    coach:{ color:'#8a6239', weight:4, opacity:.8 },
+    'day-trip':{ color:'#6d4c87', weight:3, opacity:.75, dashArray:'4 8' },
+    train:{ color:'#b44b3e', weight:4, opacity:.85 }
+  } as const;
   return <MapContainer className="map-canvas" center={[54.5,-7]} zoom={6} scrollWheelZoom>
     <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-    <Polyline positions={points} pathOptions={{ color:'#173f2b', weight:4, opacity:.75 }} />
-    {days.map(day => <Marker key={day.id} position={[day.lat,day.lng]} icon={icon}><Popup><b>{day.title}</b><br/>{day.place}<br/><small>{day.label}</small></Popup></Marker>)}
+    {trip.routes.map(route => <Polyline key={route.id} positions={route.points} pathOptions={styles[route.mode]}><Popup><b>{route.label}</b></Popup></Polyline>)}
+    {visibleDays.map(day => <Marker key={day.id} position={[day.lat,day.lng]} icon={icon}><Popup><b>{day.title}</b><br/>{day.place}<br/><small>{day.label}</small></Popup></Marker>)}
+    <Marker position={[54.968,-5.015]} icon={icon}><Popup><b>Cairnryan</b><br/>Ferry arrival and onward transfer</Popup></Marker>
   </MapContainer>;
 }

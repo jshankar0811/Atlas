@@ -2,7 +2,8 @@ export type TripDay = { id:string; date:string; end?:string; label:string; title
 export type Booking = { title:string; category:string; status:'booked'|'open'; date:string; notes:string; confirmation?:string };
 export type ChecklistItem = { id:string; label:string; note:string };
 export type ChecklistGroup = { group:string; items:ChecklistItem[] };
-export type Trip = { id:string; title:string; subtitle:string; startDate:string; endDate:string; regions:string[]; days:TripDay[]; bookings:Booking[]; checklists:ChecklistGroup[] };
+export type RouteSegment = { id:string; label:string; mode:'drive'|'ferry'|'coach'|'day-trip'|'train'; points:[number,number][] };
+export type Trip = { id:string; title:string; subtitle:string; startDate:string; endDate:string; regions:string[]; days:TripDay[]; routes:RouteSegment[]; bookings:Booking[]; checklists:ChecklistGroup[] };
 
 export const trip: Trip = {
   id:'ireland-scotland-2026', title:'Ireland & Scotland 2026', subtitle:'Jul 23–Aug 7, 2026', startDate:'2026-07-23', endDate:'2026-08-07', regions:['Ireland','Northern Ireland','Scotland'],
@@ -20,6 +21,13 @@ export const trip: Trip = {
     {id:'train',date:'2026-08-03',label:'Aug 3',title:'Train to Edinburgh',place:'Glasgow → Edinburgh',lat:55.9533,lng:-3.1883,type:'train',detail:'Keep ticket available offline and verify departure station and time.',status:'booked'},
     {id:'edinburgh',date:'2026-08-03',end:'2026-08-07',label:'Aug 3–7',title:'Edinburgh',place:'Hotel not yet verified',lat:55.9533,lng:-3.1883,type:'hotel',detail:'Final Scotland base. Lodging confirmation still needs to be added.',status:'open'},
     {id:'flight-home',date:'2026-08-07',label:'Aug 7',title:'Fly home',place:'Edinburgh → United States',lat:55.9508,lng:-3.3615,type:'flight',detail:'Check in when the airline window opens and allow extra airport time.',status:'booked'}
+  ],
+  routes:[
+    {id:'ireland-drive',label:'Ireland road trip',mode:'drive',points:[[53.3498,-6.2603],[53.2743,-9.0491],[52.1409,-10.2689],[52.0599,-9.5044],[53.7179,-6.3561],[54.6082,-5.9097]]},
+    {id:'ferry-crossing',label:'Belfast to Cairnryan ferry',mode:'ferry',points:[[54.631,-5.892],[54.968,-5.015]]},
+    {id:'cairnryan-transfer',label:'Cairnryan to Glasgow',mode:'coach',points:[[54.968,-5.015],[55.8642,-4.4331]]},
+    {id:'highlands-loop',label:'Glencoe Highlands day trip',mode:'day-trip',points:[[55.8642,-4.4331],[56.6826,-5.1023],[55.8642,-4.4331]]},
+    {id:'edinburgh-train',label:'Glasgow to Edinburgh train',mode:'train',points:[[55.8642,-4.4331],[55.9533,-3.1883]]}
   ],
   bookings:[
     {title:'American Airlines outbound',category:'Flight',status:'booked',date:'Jul 23',confirmation:'NWNHLU',notes:'Overnight flight into Dublin.'},
