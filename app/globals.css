@@ -1,6 +1,7 @@
 @import '../src/styles.css';
 @import '../src/intelligence.css';
 @import '../src/journal.css';
+@import './apple.css';
 
 textarea, select { font: inherit; }
 textarea { width:100%; min-height:120px; resize:vertical; }
